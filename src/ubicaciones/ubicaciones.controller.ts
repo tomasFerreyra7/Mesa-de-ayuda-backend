@@ -1,12 +1,14 @@
 import {
-  Controller, Get, Post, Patch, Body, Param, Query, ParseIntPipe,
+  Controller, Get, Post, Patch, Delete, Body, Param, Query, ParseIntPipe,
+  HttpCode, HttpStatus,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UbicacionesService } from './ubicaciones.service';
 import {
   CreateCircunscripcionDto, UpdateCircunscripcionDto,
   CreateDistritoDto, UpdateDistritoDto,
-  CreateJuzgadoDto, UpdateJuzgadoDto, CreatePuestoDto, FilterJuzgadoDto,
+  CreateJuzgadoDto, UpdateJuzgadoDto, CreatePuestoDto,
+  FilterDistritoDto, FilterJuzgadoDto,
 } from './dto/ubicacion.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolEnum } from '../usuarios/entities/usuario.entity';
@@ -40,6 +42,20 @@ export class UbicacionesController {
     return this.service.updateCircunscripcion(id, dto);
   }
 
+  @Delete('circunscripciones/:id')
+  @Roles(RolEnum.ADMIN)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Soft delete: dar de baja circunscripción' })
+  removeCircunscripcion(@Param('id', ParseIntPipe) id: number) {
+    return this.service.removeCircunscripcion(id);
+  }
+
+  @Get('distritos')
+  @ApiOperation({ summary: 'Listar distritos' })
+  findDistritos(@Query() filter: FilterDistritoDto) {
+    return this.service.findDistritos(filter);
+  }
+
   @Post('distritos')
   @Roles(RolEnum.ADMIN)
   @ApiOperation({ summary: 'Crear distrito' })
@@ -55,6 +71,14 @@ export class UbicacionesController {
     @Body() dto: UpdateDistritoDto,
   ) {
     return this.service.updateDistrito(id, dto);
+  }
+
+  @Delete('distritos/:id')
+  @Roles(RolEnum.ADMIN)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Soft delete: dar de baja distrito' })
+  removeDistrito(@Param('id', ParseIntPipe) id: number) {
+    return this.service.removeDistrito(id);
   }
 
   @Get('juzgados')
@@ -83,10 +107,29 @@ export class UbicacionesController {
     return this.service.updateJuzgado(id, dto);
   }
 
+  @Delete('juzgados/:id')
+  @Roles(RolEnum.ADMIN)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Soft delete: dar de baja juzgado' })
+  removeJuzgado(@Param('id', ParseIntPipe) id: number) {
+    return this.service.removeJuzgado(id);
+  }
+
   @Post('juzgados/:id/puestos')
   @Roles(RolEnum.ADMIN)
   @ApiOperation({ summary: 'Agregar puesto al juzgado' })
   createPuesto(@Param('id', ParseIntPipe) id: number, @Body() dto: CreatePuestoDto) {
     return this.service.createPuesto(id, dto);
+  }
+
+  @Delete('juzgados/:juzgadoId/puestos/:puestoId')
+  @Roles(RolEnum.ADMIN)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Soft delete: dar de baja puesto' })
+  removePuesto(
+    @Param('juzgadoId', ParseIntPipe) juzgadoId: number,
+    @Param('puestoId', ParseIntPipe) puestoId: number,
+  ) {
+    return this.service.removePuesto(juzgadoId, puestoId);
   }
 }

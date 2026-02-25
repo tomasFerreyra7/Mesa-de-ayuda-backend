@@ -150,6 +150,20 @@ export class CreatePuestoDto {
   descripcion?: string;
 }
 
+export class FilterDistritoDto {
+  @ApiPropertyOptional({ description: 'Filtrar por circunscripción' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  circunscripcion_id?: number;
+
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  activo?: boolean;
+}
+
 export class FilterJuzgadoDto {
   @ApiPropertyOptional()
   @IsOptional()

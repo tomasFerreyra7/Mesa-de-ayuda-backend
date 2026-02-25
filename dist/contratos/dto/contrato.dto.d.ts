@@ -21,6 +21,7 @@ export declare class UpdateContratoDto {
     equipo_ids?: number[];
     software_ids?: number[];
     observaciones?: string;
+    activo?: boolean;
 }
 export declare class CreateProveedorDto {
     nombre: string;
@@ -28,6 +29,14 @@ export declare class CreateProveedorDto {
     telefono?: string;
     email?: string;
     contacto?: string;
+}
+export declare class UpdateProveedorDto {
+    nombre?: string;
+    cuit?: string;
+    telefono?: string;
+    email?: string;
+    contacto?: string;
+    activo?: boolean;
 }
 export declare class FilterContratoDto extends PaginationDto {
     estado?: EstadoContratoEnum;

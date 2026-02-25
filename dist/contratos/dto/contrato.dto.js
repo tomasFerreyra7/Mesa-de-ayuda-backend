@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FilterContratoDto = exports.CreateProveedorDto = exports.UpdateContratoDto = exports.CreateContratoDto = void 0;
+exports.FilterContratoDto = exports.UpdateProveedorDto = exports.CreateProveedorDto = exports.UpdateContratoDto = exports.CreateContratoDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
@@ -134,6 +134,12 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateContratoDto.prototype, "observaciones", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Soft delete: false para dar de baja' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], UpdateContratoDto.prototype, "activo", void 0);
 class CreateProveedorDto {
 }
 exports.CreateProveedorDto = CreateProveedorDto;
@@ -167,6 +173,46 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateProveedorDto.prototype, "contacto", void 0);
+class UpdateProveedorDto {
+}
+exports.UpdateProveedorDto = UpdateProveedorDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(150),
+    __metadata("design:type", String)
+], UpdateProveedorDto.prototype, "nombre", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateProveedorDto.prototype, "cuit", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateProveedorDto.prototype, "telefono", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateProveedorDto.prototype, "email", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateProveedorDto.prototype, "contacto", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Soft delete: false para dar de baja' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], UpdateProveedorDto.prototype, "activo", void 0);
 class FilterContratoDto extends pagination_dto_1.PaginationDto {
 }
 exports.FilterContratoDto = FilterContratoDto;

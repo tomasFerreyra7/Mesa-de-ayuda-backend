@@ -3,7 +3,7 @@ import { Contrato } from './entities/contrato.entity';
 import { Proveedor } from './entities/proveedor.entity';
 import { Equipo } from '../equipos/entities/equipo.entity';
 import { Software } from '../software/entities/software.entity';
-import { CreateContratoDto, UpdateContratoDto, CreateProveedorDto, FilterContratoDto } from './dto/contrato.dto';
+import { CreateContratoDto, UpdateContratoDto, CreateProveedorDto, UpdateProveedorDto, FilterContratoDto } from './dto/contrato.dto';
 export declare class ContratosService {
     private readonly contratoRepo;
     private readonly proveedorRepo;
@@ -26,5 +26,6 @@ export declare class ContratosService {
     findAllProveedores(): Promise<Proveedor[]>;
     findOneProveedor(id: number): Promise<Proveedor>;
     createProveedor(dto: CreateProveedorDto): Promise<Proveedor>;
-    updateProveedor(id: number, dto: CreateProveedorDto): Promise<Proveedor>;
+    updateProveedor(id: number, dto: UpdateProveedorDto): Promise<Proveedor>;
+    removeProveedor(id: number): Promise<void>;
 }

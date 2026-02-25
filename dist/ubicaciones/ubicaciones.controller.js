@@ -32,11 +32,20 @@ let UbicacionesController = class UbicacionesController {
     updateCircunscripcion(id, dto) {
         return this.service.updateCircunscripcion(id, dto);
     }
+    removeCircunscripcion(id) {
+        return this.service.removeCircunscripcion(id);
+    }
+    findDistritos(filter) {
+        return this.service.findDistritos(filter);
+    }
     createDistrito(dto) {
         return this.service.createDistrito(dto);
     }
     updateDistrito(id, dto) {
         return this.service.updateDistrito(id, dto);
+    }
+    removeDistrito(id) {
+        return this.service.removeDistrito(id);
     }
     findJuzgados(filter) {
         return this.service.findJuzgados(filter);
@@ -50,8 +59,14 @@ let UbicacionesController = class UbicacionesController {
     updateJuzgado(id, dto) {
         return this.service.updateJuzgado(id, dto);
     }
+    removeJuzgado(id) {
+        return this.service.removeJuzgado(id);
+    }
     createPuesto(id, dto) {
         return this.service.createPuesto(id, dto);
+    }
+    removePuesto(juzgadoId, puestoId) {
+        return this.service.removePuesto(juzgadoId, puestoId);
     }
 };
 exports.UbicacionesController = UbicacionesController;
@@ -82,6 +97,24 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UbicacionesController.prototype, "updateCircunscripcion", null);
 __decorate([
+    (0, common_1.Delete)('circunscripciones/:id'),
+    (0, roles_decorator_1.Roles)(usuario_entity_1.RolEnum.ADMIN),
+    (0, common_1.HttpCode)(common_1.HttpStatus.NO_CONTENT),
+    (0, swagger_1.ApiOperation)({ summary: 'Soft delete: dar de baja circunscripción' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], UbicacionesController.prototype, "removeCircunscripcion", null);
+__decorate([
+    (0, common_1.Get)('distritos'),
+    (0, swagger_1.ApiOperation)({ summary: 'Listar distritos' }),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [ubicacion_dto_1.FilterDistritoDto]),
+    __metadata("design:returntype", void 0)
+], UbicacionesController.prototype, "findDistritos", null);
+__decorate([
     (0, common_1.Post)('distritos'),
     (0, roles_decorator_1.Roles)(usuario_entity_1.RolEnum.ADMIN),
     (0, swagger_1.ApiOperation)({ summary: 'Crear distrito' }),
@@ -100,6 +133,16 @@ __decorate([
     __metadata("design:paramtypes", [Number, ubicacion_dto_1.UpdateDistritoDto]),
     __metadata("design:returntype", void 0)
 ], UbicacionesController.prototype, "updateDistrito", null);
+__decorate([
+    (0, common_1.Delete)('distritos/:id'),
+    (0, roles_decorator_1.Roles)(usuario_entity_1.RolEnum.ADMIN),
+    (0, common_1.HttpCode)(common_1.HttpStatus.NO_CONTENT),
+    (0, swagger_1.ApiOperation)({ summary: 'Soft delete: dar de baja distrito' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], UbicacionesController.prototype, "removeDistrito", null);
 __decorate([
     (0, common_1.Get)('juzgados'),
     (0, swagger_1.ApiOperation)({ summary: 'Listar juzgados/dependencias' }),
@@ -136,6 +179,16 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UbicacionesController.prototype, "updateJuzgado", null);
 __decorate([
+    (0, common_1.Delete)('juzgados/:id'),
+    (0, roles_decorator_1.Roles)(usuario_entity_1.RolEnum.ADMIN),
+    (0, common_1.HttpCode)(common_1.HttpStatus.NO_CONTENT),
+    (0, swagger_1.ApiOperation)({ summary: 'Soft delete: dar de baja juzgado' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], UbicacionesController.prototype, "removeJuzgado", null);
+__decorate([
     (0, common_1.Post)('juzgados/:id/puestos'),
     (0, roles_decorator_1.Roles)(usuario_entity_1.RolEnum.ADMIN),
     (0, swagger_1.ApiOperation)({ summary: 'Agregar puesto al juzgado' }),
@@ -145,6 +198,17 @@ __decorate([
     __metadata("design:paramtypes", [Number, ubicacion_dto_1.CreatePuestoDto]),
     __metadata("design:returntype", void 0)
 ], UbicacionesController.prototype, "createPuesto", null);
+__decorate([
+    (0, common_1.Delete)('juzgados/:juzgadoId/puestos/:puestoId'),
+    (0, roles_decorator_1.Roles)(usuario_entity_1.RolEnum.ADMIN),
+    (0, common_1.HttpCode)(common_1.HttpStatus.NO_CONTENT),
+    (0, swagger_1.ApiOperation)({ summary: 'Soft delete: dar de baja puesto' }),
+    __param(0, (0, common_1.Param)('juzgadoId', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Param)('puestoId', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number]),
+    __metadata("design:returntype", void 0)
+], UbicacionesController.prototype, "removePuesto", null);
 exports.UbicacionesController = UbicacionesController = __decorate([
     (0, swagger_1.ApiTags)('Ubicaciones'),
     (0, swagger_1.ApiBearerAuth)(),

@@ -1,5 +1,5 @@
 import { ContratosService } from './contratos.service';
-import { CreateContratoDto, UpdateContratoDto, CreateProveedorDto, FilterContratoDto } from './dto/contrato.dto';
+import { CreateContratoDto, UpdateContratoDto, CreateProveedorDto, UpdateProveedorDto, FilterContratoDto } from './dto/contrato.dto';
 export declare class ContratosController {
     private readonly service;
     constructor(service: ContratosService);
@@ -19,5 +19,6 @@ export declare class ContratosController {
     findAllProveedores(): Promise<import("./entities/proveedor.entity").Proveedor[]>;
     createProveedor(dto: CreateProveedorDto): Promise<import("./entities/proveedor.entity").Proveedor>;
     findOneProveedor(id: number): Promise<import("./entities/proveedor.entity").Proveedor>;
-    updateProveedor(id: number, dto: CreateProveedorDto): Promise<import("./entities/proveedor.entity").Proveedor>;
+    updateProveedor(id: number, dto: UpdateProveedorDto): Promise<import("./entities/proveedor.entity").Proveedor>;
+    removeProveedor(id: number): Promise<void>;
 }
