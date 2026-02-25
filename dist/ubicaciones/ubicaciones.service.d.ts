@@ -3,7 +3,7 @@ import { Circunscripcion } from './entities/circunscripcion.entity';
 import { Distrito } from './entities/distrito.entity';
 import { Juzgado } from './entities/juzgado.entity';
 import { Puesto } from './entities/puesto.entity';
-import { CreateCircunscripcionDto, UpdateCircunscripcionDto, CreateDistritoDto, UpdateDistritoDto, CreateJuzgadoDto, UpdateJuzgadoDto, CreatePuestoDto, FilterJuzgadoDto } from './dto/ubicacion.dto';
+import { CreateCircunscripcionDto, UpdateCircunscripcionDto, CreateDistritoDto, UpdateDistritoDto, CreateJuzgadoDto, UpdateJuzgadoDto, CreatePuestoDto, FilterDistritoDto, FilterJuzgadoDto } from './dto/ubicacion.dto';
 export declare class UbicacionesService {
     private readonly circRepo;
     private readonly distRepo;
@@ -15,9 +15,14 @@ export declare class UbicacionesService {
     updateCircunscripcion(id: number, dto: UpdateCircunscripcionDto): Promise<Circunscripcion>;
     createDistrito(dto: CreateDistritoDto): Promise<Distrito>;
     updateDistrito(id: number, dto: UpdateDistritoDto): Promise<Distrito>;
+    findDistritos(filter: FilterDistritoDto): Promise<Distrito[]>;
+    removeCircunscripcion(id: number): Promise<void>;
+    removeDistrito(id: number): Promise<void>;
     findJuzgados(filter: FilterJuzgadoDto): Promise<Juzgado[]>;
     findOneJuzgado(id: number): Promise<Juzgado>;
     createJuzgado(dto: CreateJuzgadoDto): Promise<Juzgado>;
     updateJuzgado(id: number, dto: UpdateJuzgadoDto): Promise<Juzgado>;
+    removeJuzgado(id: number): Promise<void>;
     createPuesto(juzgadoId: number, dto: CreatePuestoDto): Promise<Puesto>;
+    removePuesto(juzgadoId: number, puestoId: number): Promise<void>;
 }

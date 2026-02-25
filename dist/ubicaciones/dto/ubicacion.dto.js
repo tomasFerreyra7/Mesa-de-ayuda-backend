@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FilterJuzgadoDto = exports.CreatePuestoDto = exports.UpdateJuzgadoDto = exports.CreateJuzgadoDto = exports.UpdateDistritoDto = exports.CreateDistritoDto = exports.UpdateCircunscripcionDto = exports.CreateCircunscripcionDto = void 0;
+exports.FilterJuzgadoDto = exports.FilterDistritoDto = exports.CreatePuestoDto = exports.UpdateJuzgadoDto = exports.CreateJuzgadoDto = exports.UpdateDistritoDto = exports.CreateDistritoDto = exports.UpdateCircunscripcionDto = exports.CreateCircunscripcionDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
@@ -190,6 +190,23 @@ __decorate([
     (0, class_validator_1.MaxLength)(100),
     __metadata("design:type", String)
 ], CreatePuestoDto.prototype, "descripcion", void 0);
+class FilterDistritoDto {
+}
+exports.FilterDistritoDto = FilterDistritoDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Filtrar por circunscripción' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    __metadata("design:type", Number)
+], FilterDistritoDto.prototype, "circunscripcion_id", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ default: true }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Boolean),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], FilterDistritoDto.prototype, "activo", void 0);
 class FilterJuzgadoDto {
 }
 exports.FilterJuzgadoDto = FilterJuzgadoDto;

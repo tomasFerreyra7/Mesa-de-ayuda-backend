@@ -8,7 +8,7 @@ import { Proveedor } from './entities/proveedor.entity';
 import { Equipo } from '../equipos/entities/equipo.entity';
 import { Software } from '../software/entities/software.entity';
 import {
-  CreateContratoDto, UpdateContratoDto, CreateProveedorDto, FilterContratoDto,
+  CreateContratoDto, UpdateContratoDto, CreateProveedorDto, UpdateProveedorDto, FilterContratoDto,
 } from './dto/contrato.dto';
 import { paginate } from '../common/pipes/pagination.dto';
 
@@ -29,7 +29,8 @@ export class ContratosService {
   async findAllContratos(filter: FilterContratoDto) {
     const qb = this.contratoRepo
       .createQueryBuilder('c')
-      .leftJoinAndSelect('c.proveedor', 'p');
+      .leftJoinAndSelect('c.proveedor', 'p')
+      .andWhere('c.activo = :activo', { activo: true });
 
     if (filter.q) {
       qb.andWhere('(c.nroContrato ILIKE :q OR p.nombre ILIKE :q)', { q: `%${filter.q}%` });
@@ -95,6 +96,7 @@ export class ContratosService {
     if (dto.estado !== undefined)       contrato.estado = dto.estado;
     if (dto.monto !== undefined)        contrato.monto = dto.monto;
     if (dto.observaciones !== undefined) contrato.observaciones = dto.observaciones;
+    if (dto.activo !== undefined)       contrato.activo = dto.activo;
     if (dto.equipo_ids !== undefined) {
       contrato.equipos = dto.equipo_ids.length ? await this.equipoRepo.findByIds(dto.equipo_ids) : [];
     }
@@ -109,7 +111,8 @@ export class ContratosService {
   async removeContrato(id: number) {
     const contrato = await this.contratoRepo.findOne({ where: { id } });
     if (!contrato) throw new NotFoundException(`Contrato #${id} no encontrado`);
-    await this.contratoRepo.remove(contrato);
+    contrato.activo = false;
+    await this.contratoRepo.save(contrato);
   }
 
   // ── Proveedores ───────────────────────────────────────────────
@@ -133,10 +136,22 @@ export class ContratosService {
     return this.proveedorRepo.save(p);
   }
 
-  async updateProveedor(id: number, dto: CreateProveedorDto) {
+  async updateProveedor(id: number, dto: UpdateProveedorDto) {
     const p = await this.proveedorRepo.findOne({ where: { id } });
     if (!p) throw new NotFoundException(`Proveedor #${id} no encontrado`);
-    Object.assign(p, dto);
+    if (dto.nombre !== undefined) p.nombre = dto.nombre;
+    if (dto.cuit !== undefined) p.cuit = dto.cuit;
+    if (dto.telefono !== undefined) p.telefono = dto.telefono;
+    if (dto.email !== undefined) p.email = dto.email;
+    if (dto.contacto !== undefined) p.contacto = dto.contacto;
+    if (dto.activo !== undefined) p.activo = dto.activo;
     return this.proveedorRepo.save(p);
+  }
+
+  async removeProveedor(id: number) {
+    const p = await this.proveedorRepo.findOne({ where: { id } });
+    if (!p) throw new NotFoundException(`Proveedor #${id} no encontrado`);
+    p.activo = false;
+    await this.proveedorRepo.save(p);
   }
 }

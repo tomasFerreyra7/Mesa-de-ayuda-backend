@@ -38,6 +38,10 @@ export declare class CreatePuestoDto {
     numero: number;
     descripcion?: string;
 }
+export declare class FilterDistritoDto {
+    circunscripcion_id?: number;
+    activo?: boolean;
+}
 export declare class FilterJuzgadoDto {
     q?: string;
     distrito_id?: number;

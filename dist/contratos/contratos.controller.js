@@ -50,6 +50,9 @@ let ContratosController = class ContratosController {
     updateProveedor(id, dto) {
         return this.service.updateProveedor(id, dto);
     }
+    removeProveedor(id) {
+        return this.service.removeProveedor(id);
+    }
 };
 exports.ContratosController = ContratosController;
 __decorate([
@@ -91,7 +94,7 @@ __decorate([
     (0, common_1.Delete)('contratos/:id'),
     (0, roles_decorator_1.Roles)(usuario_entity_1.RolEnum.ADMIN),
     (0, common_1.HttpCode)(common_1.HttpStatus.NO_CONTENT),
-    (0, swagger_1.ApiOperation)({ summary: 'Eliminar contrato' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Soft delete: dar de baja contrato (activo = false)' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
@@ -124,13 +127,23 @@ __decorate([
 __decorate([
     (0, common_1.Patch)('proveedores/:id'),
     (0, roles_decorator_1.Roles)(usuario_entity_1.RolEnum.ADMIN),
-    (0, swagger_1.ApiOperation)({ summary: 'Actualizar proveedor' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Actualizar proveedor (incl. activo para soft delete)' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, contrato_dto_1.CreateProveedorDto]),
+    __metadata("design:paramtypes", [Number, contrato_dto_1.UpdateProveedorDto]),
     __metadata("design:returntype", void 0)
 ], ContratosController.prototype, "updateProveedor", null);
+__decorate([
+    (0, common_1.Delete)('proveedores/:id'),
+    (0, roles_decorator_1.Roles)(usuario_entity_1.RolEnum.ADMIN),
+    (0, common_1.HttpCode)(common_1.HttpStatus.NO_CONTENT),
+    (0, swagger_1.ApiOperation)({ summary: 'Soft delete: dar de baja proveedor (activo = false)' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], ContratosController.prototype, "removeProveedor", null);
 exports.ContratosController = ContratosController = __decorate([
     (0, swagger_1.ApiTags)('Contratos'),
     (0, swagger_1.ApiBearerAuth)(),

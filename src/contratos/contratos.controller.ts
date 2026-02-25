@@ -1,13 +1,7 @@
-import {
-  Controller, Get, Post, Patch, Delete,
-  Body, Param, Query, ParseIntPipe, HttpCode, HttpStatus,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, ParseIntPipe, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ContratosService } from './contratos.service';
-import {
-  CreateContratoDto, UpdateContratoDto,
-  CreateProveedorDto, FilterContratoDto,
-} from './dto/contrato.dto';
+import { CreateContratoDto, UpdateContratoDto, CreateProveedorDto, UpdateProveedorDto, FilterContratoDto } from './dto/contrato.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolEnum } from '../usuarios/entities/usuario.entity';
 
@@ -48,7 +42,7 @@ export class ContratosController {
   @Delete('contratos/:id')
   @Roles(RolEnum.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Eliminar contrato' })
+  @ApiOperation({ summary: 'Soft delete: dar de baja contrato (activo = false)' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.service.removeContrato(id);
   }
@@ -76,8 +70,17 @@ export class ContratosController {
 
   @Patch('proveedores/:id')
   @Roles(RolEnum.ADMIN)
-  @ApiOperation({ summary: 'Actualizar proveedor' })
-  updateProveedor(@Param('id', ParseIntPipe) id: number, @Body() dto: CreateProveedorDto) {
+  @ApiOperation({ summary: 'Actualizar proveedor (incl. activo para soft delete)' })
+  updateProveedor(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateProveedorDto) {
     return this.service.updateProveedor(id, dto);
   }
+
+  @Delete('proveedores/:id')
+  @Roles(RolEnum.ADMIN)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Soft delete: dar de baja proveedor (activo = false)' })
+  removeProveedor(@Param('id', ParseIntPipe) id: number) {
+    return this.service.removeProveedor(id);
+  }
 }
+

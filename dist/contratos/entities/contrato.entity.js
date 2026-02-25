@@ -79,6 +79,10 @@ __decorate([
     __metadata("design:type", String)
 ], Contrato.prototype, "observaciones", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ default: true }),
+    __metadata("design:type", Boolean)
+], Contrato.prototype, "activo", void 0);
+__decorate([
     (0, typeorm_1.CreateDateColumn)({ name: 'created_at' }),
     __metadata("design:type", Date)
 ], Contrato.prototype, "createdAt", void 0);

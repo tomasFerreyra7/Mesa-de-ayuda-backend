@@ -1,5 +1,5 @@
 /**
- * Crea el primer usuario admin en la base de datos (solo si no existe ningún usuario).
+ * Crea un usuario admin si no existe uno con el mismo email (aunque ya haya otros usuarios).
  * Uso: node scripts/seed-admin.js
  * Opcional en .env: SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD, SEED_ADMIN_NOMBRE
  *
@@ -45,10 +45,10 @@ async function main() {
   try {
     await client.connect();
 
-    const { rows: existing } = await client.query('SELECT id FROM pj.usuario LIMIT 1');
+    const { rows: existing } = await client.query('SELECT id FROM pj.usuario WHERE email = $1', [email]);
     if (existing.length > 0) {
-      console.log('Ya existen usuarios en la base de datos.');
-      console.log('Usá POST /auth/login con tu email y contraseña.');
+      console.log('Ya existe un usuario con el email:', email);
+      console.log('Usá POST /auth/login o cambiá SEED_ADMIN_EMAIL en .env para crear otro admin.');
       process.exit(0);
     }
     const passwordHash = await bcrypt.hash(password, 12);

@@ -13,6 +13,7 @@ import {
   CreateJuzgadoDto,
   UpdateJuzgadoDto,
   CreatePuestoDto,
+  FilterDistritoDto,
   FilterJuzgadoDto,
 } from './dto/ubicacion.dto';
 
@@ -29,13 +30,17 @@ export class UbicacionesService {
     private readonly puestoRepo: Repository<Puesto>,
   ) {}
 
-  // Árbol completo: circunscripciones → distritos
+  // Árbol completo: circunscripciones → distritos (solo activos)
   async getArbol() {
-    return this.circRepo.find({
+    const circs = await this.circRepo.find({
       where: { activo: true },
       relations: ['distritos'],
       order: { codigo: 'ASC' },
     });
+    circs.forEach((c) => {
+      c.distritos = (c.distritos || []).filter((d) => d.activo);
+    });
+    return circs;
   }
 
   async createCircunscripcion(dto: CreateCircunscripcionDto) {
@@ -87,6 +92,35 @@ export class UbicacionesService {
     return this.distRepo.save(d);
   }
 
+  async findDistritos(filter: FilterDistritoDto) {
+    const qb = this.distRepo
+      .createQueryBuilder('d')
+      .leftJoinAndSelect('d.circunscripcion', 'c');
+    if (filter.circunscripcion_id) {
+      qb.andWhere('d.circunscripcionId = :cid', { cid: filter.circunscripcion_id });
+    }
+    if (filter.activo !== undefined) {
+      qb.andWhere('d.activo = :activo', { activo: filter.activo });
+    } else {
+      qb.andWhere('d.activo = true');
+    }
+    return qb.orderBy('d.nombre').getMany();
+  }
+
+  async removeCircunscripcion(id: number) {
+    const c = await this.circRepo.findOne({ where: { id } });
+    if (!c) throw new NotFoundException(`Circunscripción #${id} no encontrada`);
+    c.activo = false;
+    await this.circRepo.save(c);
+  }
+
+  async removeDistrito(id: number) {
+    const d = await this.distRepo.findOne({ where: { id } });
+    if (!d) throw new NotFoundException(`Distrito #${id} no encontrado`);
+    d.activo = false;
+    await this.distRepo.save(d);
+  }
+
   async findJuzgados(filter: FilterJuzgadoDto) {
     const qb = this.juzgadoRepo.createQueryBuilder('j').leftJoinAndSelect('j.distrito', 'd').leftJoinAndSelect('d.circunscripcion', 'c');
 
@@ -136,6 +170,13 @@ export class UbicacionesService {
     return this.findOneJuzgado(id);
   }
 
+  async removeJuzgado(id: number) {
+    const j = await this.juzgadoRepo.findOne({ where: { id } });
+    if (!j) throw new NotFoundException(`Juzgado #${id} no encontrado`);
+    j.activo = false;
+    await this.juzgadoRepo.save(j);
+  }
+
   async createPuesto(juzgadoId: number, dto: CreatePuestoDto) {
     const j = await this.juzgadoRepo.findOne({ where: { id: juzgadoId } });
     if (!j) throw new NotFoundException(`Juzgado #${juzgadoId} no encontrado`);
@@ -151,6 +192,15 @@ export class UbicacionesService {
       descripcion: dto.descripcion,
     });
     return this.puestoRepo.save(puesto);
+  }
+
+  async removePuesto(juzgadoId: number, puestoId: number) {
+    const puesto = await this.puestoRepo.findOne({
+      where: { id: puestoId, juzgadoId },
+    });
+    if (!puesto) throw new NotFoundException(`Puesto #${puestoId} no encontrado en este juzgado`);
+    puesto.activo = false;
+    await this.puestoRepo.save(puesto);
   }
 }
 

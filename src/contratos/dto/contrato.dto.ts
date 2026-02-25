@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsArray, IsDateString, IsEnum, IsInt, IsOptional,
+  IsArray, IsBoolean, IsDateString, IsEnum, IsInt, IsOptional,
   IsString, MaxLength, IsNumber,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -104,6 +104,11 @@ export class UpdateContratoDto {
   @IsOptional()
   @IsString()
   observaciones?: string;
+
+  @ApiPropertyOptional({ description: 'Soft delete: false para dar de baja' })
+  @IsOptional()
+  @IsBoolean()
+  activo?: boolean;
 }
 
 export class CreateProveedorDto {
@@ -131,6 +136,39 @@ export class CreateProveedorDto {
   @IsOptional()
   @IsString()
   contacto?: string;
+}
+
+export class UpdateProveedorDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  nombre?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  cuit?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  telefono?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  contacto?: string;
+
+  @ApiPropertyOptional({ description: 'Soft delete: false para dar de baja' })
+  @IsOptional()
+  @IsBoolean()
+  activo?: boolean;
 }
 
 export class FilterContratoDto extends PaginationDto {

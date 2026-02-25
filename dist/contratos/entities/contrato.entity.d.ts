@@ -28,6 +28,7 @@ export declare class Contrato {
     monto: number;
     moneda: string;
     observaciones: string;
+    activo: boolean;
     createdAt: Date;
     updatedAt: Date;
     proveedor: Proveedor;
