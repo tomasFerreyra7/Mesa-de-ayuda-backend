@@ -13,8 +13,10 @@ import {
   CreateJuzgadoDto,
   UpdateJuzgadoDto,
   CreatePuestoDto,
+  UpdatePuestoDto,
   FilterDistritoDto,
   FilterJuzgadoDto,
+  FilterPuestoDto,
 } from './dto/ubicacion.dto';
 
 @Injectable()
@@ -177,6 +179,48 @@ export class UbicacionesService {
     await this.juzgadoRepo.save(j);
   }
 
+  async findPuestos(filter: FilterPuestoDto) {
+    const qb = this.puestoRepo
+      .createQueryBuilder('p')
+      .leftJoinAndSelect('p.juzgado', 'j')
+      .leftJoinAndSelect('p.equipo', 'e');
+    if (filter.juzgado_ids?.length) {
+      qb.andWhere('p.juzgadoId IN (:...ids)', { ids: filter.juzgado_ids });
+    } else if (filter.juzgado_id) {
+      qb.andWhere('p.juzgadoId = :jid', { jid: filter.juzgado_id });
+    }
+    if (filter.activo !== undefined) {
+      qb.andWhere('p.activo = :activo', { activo: filter.activo });
+    } else {
+      qb.andWhere('p.activo = true');
+    }
+    return qb.orderBy('p.juzgadoId').addOrderBy('p.numero').getMany();
+  }
+
+  async findPuestosByJuzgado(juzgadoId: number) {
+    const j = await this.juzgadoRepo.findOne({ where: { id: juzgadoId } });
+    if (!j) throw new NotFoundException(`Juzgado #${juzgadoId} no encontrado`);
+    return this.findPuestos({ juzgado_id: juzgadoId });
+  }
+
+  async findOnePuestoByJuzgado(juzgadoId: number, puestoId: number) {
+    const puesto = await this.puestoRepo.findOne({
+      where: { id: puestoId, juzgadoId },
+      relations: ['juzgado', 'juzgado.distrito', 'equipo'],
+    });
+    if (!puesto) throw new NotFoundException(`Puesto #${puestoId} no encontrado en este juzgado`);
+    return puesto;
+  }
+
+  async findOnePuesto(id: number) {
+    const puesto = await this.puestoRepo.findOne({
+      where: { id },
+      relations: ['juzgado', 'juzgado.distrito', 'equipo'],
+    });
+    if (!puesto) throw new NotFoundException(`Puesto #${id} no encontrado`);
+    return puesto;
+  }
+
   async createPuesto(juzgadoId: number, dto: CreatePuestoDto) {
     const j = await this.juzgadoRepo.findOne({ where: { id: juzgadoId } });
     if (!j) throw new NotFoundException(`Juzgado #${juzgadoId} no encontrado`);
@@ -192,6 +236,26 @@ export class UbicacionesService {
       descripcion: dto.descripcion,
     });
     return this.puestoRepo.save(puesto);
+  }
+
+  async updatePuesto(juzgadoId: number, puestoId: number, dto: UpdatePuestoDto) {
+    const puesto = await this.puestoRepo.findOne({
+      where: { id: puestoId, juzgadoId },
+    });
+    if (!puesto) throw new NotFoundException(`Puesto #${puestoId} no encontrado en este juzgado`);
+
+    if (dto.numero !== undefined && dto.numero !== puesto.numero) {
+      const exists = await this.puestoRepo.findOne({
+        where: { juzgadoId, numero: dto.numero },
+      });
+      if (exists) throw new ConflictException(`Puesto ${dto.numero} ya existe en este juzgado`);
+      puesto.numero = dto.numero;
+    }
+    if (dto.descripcion !== undefined) puesto.descripcion = dto.descripcion;
+    if (dto.activo !== undefined) puesto.activo = dto.activo;
+
+    await this.puestoRepo.save(puesto);
+    return this.findOnePuesto(puestoId);
   }
 
   async removePuesto(juzgadoId: number, puestoId: number) {

@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FilterJuzgadoDto = exports.FilterDistritoDto = exports.CreatePuestoDto = exports.UpdateJuzgadoDto = exports.CreateJuzgadoDto = exports.UpdateDistritoDto = exports.CreateDistritoDto = exports.UpdateCircunscripcionDto = exports.CreateCircunscripcionDto = void 0;
+exports.FilterJuzgadoDto = exports.FilterDistritoDto = exports.FilterPuestoDto = exports.UpdatePuestoDto = exports.CreatePuestoDto = exports.UpdateJuzgadoDto = exports.CreateJuzgadoDto = exports.UpdateDistritoDto = exports.CreateDistritoDto = exports.UpdateCircunscripcionDto = exports.CreateCircunscripcionDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
@@ -190,6 +190,54 @@ __decorate([
     (0, class_validator_1.MaxLength)(100),
     __metadata("design:type", String)
 ], CreatePuestoDto.prototype, "descripcion", void 0);
+class UpdatePuestoDto {
+}
+exports.UpdatePuestoDto = UpdatePuestoDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsInt)(),
+    (0, class_transformer_1.Type)(() => Number),
+    __metadata("design:type", Number)
+], UpdatePuestoDto.prototype, "numero", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(100),
+    __metadata("design:type", String)
+], UpdatePuestoDto.prototype, "descripcion", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Soft delete: false para dar de baja' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], UpdatePuestoDto.prototype, "activo", void 0);
+class FilterPuestoDto {
+}
+exports.FilterPuestoDto = FilterPuestoDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Filtrar por un juzgado' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    __metadata("design:type", Number)
+], FilterPuestoDto.prototype, "juzgado_id", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Filtrar por varios juzgados (ej: juzgado_ids=1&juzgado_ids=2)', type: [Number] }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsInt)({ each: true }),
+    (0, class_transformer_1.Type)(() => Number),
+    __metadata("design:type", Array)
+], FilterPuestoDto.prototype, "juzgado_ids", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ default: true }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Boolean),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], FilterPuestoDto.prototype, "activo", void 0);
 class FilterDistritoDto {
 }
 exports.FilterDistritoDto = FilterDistritoDto;
