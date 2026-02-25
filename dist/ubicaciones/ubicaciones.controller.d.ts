@@ -1,5 +1,5 @@
 import { UbicacionesService } from './ubicaciones.service';
-import { CreateCircunscripcionDto, UpdateCircunscripcionDto, CreateDistritoDto, UpdateDistritoDto, CreateJuzgadoDto, UpdateJuzgadoDto, CreatePuestoDto, FilterDistritoDto, FilterJuzgadoDto } from './dto/ubicacion.dto';
+import { CreateCircunscripcionDto, UpdateCircunscripcionDto, CreateDistritoDto, UpdateDistritoDto, CreateJuzgadoDto, UpdateJuzgadoDto, CreatePuestoDto, UpdatePuestoDto, FilterDistritoDto, FilterJuzgadoDto, FilterPuestoDto } from './dto/ubicacion.dto';
 export declare class UbicacionesController {
     private readonly service;
     constructor(service: UbicacionesService);
@@ -16,6 +16,10 @@ export declare class UbicacionesController {
     findOneJuzgado(id: number): Promise<import("./entities/juzgado.entity").Juzgado>;
     updateJuzgado(id: number, dto: UpdateJuzgadoDto): Promise<import("./entities/juzgado.entity").Juzgado>;
     removeJuzgado(id: number): Promise<void>;
+    findPuestosByJuzgado(id: number): Promise<import("./entities/puesto.entity").Puesto[]>;
+    findOnePuestoByJuzgado(id: number, puestoId: number): Promise<import("./entities/puesto.entity").Puesto>;
     createPuesto(id: number, dto: CreatePuestoDto): Promise<import("./entities/puesto.entity").Puesto>;
+    updatePuesto(juzgadoId: number, puestoId: number, dto: UpdatePuestoDto): Promise<import("./entities/puesto.entity").Puesto>;
     removePuesto(juzgadoId: number, puestoId: number): Promise<void>;
+    findPuestos(filter: FilterPuestoDto): Promise<import("./entities/puesto.entity").Puesto[]>;
 }

@@ -1,14 +1,18 @@
-import {
-  Controller, Get, Post, Patch, Delete, Body, Param, Query, ParseIntPipe,
-  HttpCode, HttpStatus,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, ParseIntPipe, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UbicacionesService } from './ubicaciones.service';
 import {
-  CreateCircunscripcionDto, UpdateCircunscripcionDto,
-  CreateDistritoDto, UpdateDistritoDto,
-  CreateJuzgadoDto, UpdateJuzgadoDto, CreatePuestoDto,
-  FilterDistritoDto, FilterJuzgadoDto,
+  CreateCircunscripcionDto,
+  UpdateCircunscripcionDto,
+  CreateDistritoDto,
+  UpdateDistritoDto,
+  CreateJuzgadoDto,
+  UpdateJuzgadoDto,
+  CreatePuestoDto,
+  UpdatePuestoDto,
+  FilterDistritoDto,
+  FilterJuzgadoDto,
+  FilterPuestoDto,
 } from './dto/ubicacion.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolEnum } from '../usuarios/entities/usuario.entity';
@@ -35,10 +39,7 @@ export class UbicacionesController {
   @Patch('circunscripciones/:id')
   @Roles(RolEnum.ADMIN)
   @ApiOperation({ summary: 'Actualizar circunscripción' })
-  updateCircunscripcion(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateCircunscripcionDto,
-  ) {
+  updateCircunscripcion(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateCircunscripcionDto) {
     return this.service.updateCircunscripcion(id, dto);
   }
 
@@ -66,10 +67,7 @@ export class UbicacionesController {
   @Patch('distritos/:id')
   @Roles(RolEnum.ADMIN)
   @ApiOperation({ summary: 'Actualizar distrito' })
-  updateDistrito(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateDistritoDto,
-  ) {
+  updateDistrito(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateDistritoDto) {
     return this.service.updateDistrito(id, dto);
   }
 
@@ -115,6 +113,18 @@ export class UbicacionesController {
     return this.service.removeJuzgado(id);
   }
 
+  @Get('juzgados/:id/puestos')
+  @ApiOperation({ summary: 'Listar puestos del juzgado' })
+  findPuestosByJuzgado(@Param('id', ParseIntPipe) id: number) {
+    return this.service.findPuestosByJuzgado(id);
+  }
+
+  @Get('juzgados/:id/puestos/:puestoId')
+  @ApiOperation({ summary: 'Detalle de puesto del juzgado (con juzgado y equipo)' })
+  findOnePuestoByJuzgado(@Param('id', ParseIntPipe) id: number, @Param('puestoId', ParseIntPipe) puestoId: number) {
+    return this.service.findOnePuestoByJuzgado(id, puestoId);
+  }
+
   @Post('juzgados/:id/puestos')
   @Roles(RolEnum.ADMIN)
   @ApiOperation({ summary: 'Agregar puesto al juzgado' })
@@ -122,14 +132,24 @@ export class UbicacionesController {
     return this.service.createPuesto(id, dto);
   }
 
+  @Patch('juzgados/:juzgadoId/puestos/:puestoId')
+  @Roles(RolEnum.ADMIN)
+  @ApiOperation({ summary: 'Actualizar puesto' })
+  updatePuesto(@Param('juzgadoId', ParseIntPipe) juzgadoId: number, @Param('puestoId', ParseIntPipe) puestoId: number, @Body() dto: UpdatePuestoDto) {
+    return this.service.updatePuesto(juzgadoId, puestoId, dto);
+  }
+
   @Delete('juzgados/:juzgadoId/puestos/:puestoId')
   @Roles(RolEnum.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Soft delete: dar de baja puesto' })
-  removePuesto(
-    @Param('juzgadoId', ParseIntPipe) juzgadoId: number,
-    @Param('puestoId', ParseIntPipe) puestoId: number,
-  ) {
+  removePuesto(@Param('juzgadoId', ParseIntPipe) juzgadoId: number, @Param('puestoId', ParseIntPipe) puestoId: number) {
     return this.service.removePuesto(juzgadoId, puestoId);
+  }
+
+  @Get('puestos')
+  @ApiOperation({ summary: 'Listar puestos (extra: filtrar por uno o varios juzgados)' })
+  findPuestos(@Query() filter: FilterPuestoDto) {
+    return this.service.findPuestos(filter);
   }
 }
