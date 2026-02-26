@@ -62,6 +62,21 @@ npm run build && npm run start:prod
 El servidor queda en: `http://localhost:3000/v1`  
 Swagger UI en: `http://localhost:3000/docs`
 
+**Primera vez:** para crear un usuario admin inicial, ejecutá `npm run seed:admin`.
+
+---
+
+## Scripts disponibles
+
+| Comando              | Descripción                                           |
+| -------------------- | ----------------------------------------------------- |
+| `npm run start:dev`  | Servidor en desarrollo (hot-reload)                   |
+| `npm run build`      | Compila el proyecto → carpeta `dist/`                 |
+| `npm run start:prod` | Ejecuta la versión compilada (requiere `build` antes) |
+| `npm run seed:admin` | Crea el usuario administrador inicial                 |
+| `npm run lint`       | Ejecuta ESLint sobre el código                        |
+| `npm run test`       | Ejecuta los tests con Jest                            |
+
 ---
 
 ## Estructura del proyecto
@@ -105,37 +120,37 @@ Los guards están registrados **globalmente** en `AuthModule` — no hace falta 
 
 ### Roles
 
-| Rol | Permisos |
-|-----|----------|
-| `admin` | Acceso total |
-| `operario` | Tickets (crear/leer), inventario (leer/actualizar), sin usuarios |
-| `tecnico_interno` | Solo sus tickets asignados |
-| `tecnico_proveedor` | Solo sus tickets asignados, sin notas internas |
+| Rol                 | Permisos                                                         |
+| ------------------- | ---------------------------------------------------------------- |
+| `admin`             | Acceso total                                                     |
+| `operario`          | Tickets (crear/leer), inventario (leer/actualizar), sin usuarios |
+| `tecnico_interno`   | Solo sus tickets asignados                                       |
+| `tecnico_proveedor` | Solo sus tickets asignados, sin notas internas                   |
 
 ---
 
 ## Endpoints principales
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| POST | `/v1/auth/login` | Login → JWT |
-| GET | `/v1/auth/me` | Usuario actual |
-| PATCH | `/v1/auth/me/password` | Cambiar contraseña |
-| GET | `/v1/dashboard/kpis` | KPIs del panel |
-| GET | `/v1/dashboard/alertas` | Alertas activas |
-| GET/POST | `/v1/tickets` | Listar / crear tickets |
-| PATCH | `/v1/tickets/:id/estado` | Cambiar estado |
-| PATCH | `/v1/tickets/:id/asignar` | Asignar a técnico |
-| GET/POST | `/v1/equipos` | Inventario hardware |
-| PATCH | `/v1/equipos/:id/reubicar` | Cambiar puesto |
-| GET/POST | `/v1/software` | Inventario software |
-| POST | `/v1/software/:id/instalaciones` | Registrar instalación |
-| GET/POST | `/v1/contratos` | Contratos |
-| GET/POST | `/v1/proveedores` | Proveedores |
-| GET | `/v1/ubicaciones/circunscripciones` | Árbol organizacional |
-| GET/POST | `/v1/ubicaciones/juzgados` | Juzgados |
-| GET/POST | `/v1/usuarios` | Gestión usuarios (admin) |
-| GET | `/v1/usuarios/tecnicos/disponibles` | Técnicos con carga |
+| Método   | Ruta                                | Descripción              |
+| -------- | ----------------------------------- | ------------------------ |
+| POST     | `/v1/auth/login`                    | Login → JWT              |
+| GET      | `/v1/auth/me`                       | Usuario actual           |
+| PATCH    | `/v1/auth/me/password`              | Cambiar contraseña       |
+| GET      | `/v1/dashboard/kpis`                | KPIs del panel           |
+| GET      | `/v1/dashboard/alertas`             | Alertas activas          |
+| GET/POST | `/v1/tickets`                       | Listar / crear tickets   |
+| PATCH    | `/v1/tickets/:id/estado`            | Cambiar estado           |
+| PATCH    | `/v1/tickets/:id/asignar`           | Asignar a técnico        |
+| GET/POST | `/v1/equipos`                       | Inventario hardware      |
+| PATCH    | `/v1/equipos/:id/reubicar`          | Cambiar puesto           |
+| GET/POST | `/v1/software`                      | Inventario software      |
+| POST     | `/v1/software/:id/instalaciones`    | Registrar instalación    |
+| GET/POST | `/v1/contratos`                     | Contratos                |
+| GET/POST | `/v1/proveedores`                   | Proveedores              |
+| GET      | `/v1/ubicaciones/circunscripciones` | Árbol organizacional     |
+| GET/POST | `/v1/ubicaciones/juzgados`          | Juzgados                 |
+| GET/POST | `/v1/usuarios`                      | Gestión usuarios (admin) |
+| GET      | `/v1/usuarios/tecnicos/disponibles` | Técnicos con carga       |
 
 Documentación completa interactiva en `/docs` (Swagger).
 
@@ -144,16 +159,19 @@ Documentación completa interactiva en `/docs` (Swagger).
 ## Lógica de negocio destacada
 
 **Tickets**
+
 - SLA automático según prioridad: Crítica=4h, Alta=8h, Media=24h, Baja=72h
 - Historial de estados registrado automáticamente en cada transición
 - Técnicos solo acceden a sus tickets asignados
 - Técnico proveedor no puede ver notas internas
 
 **Software**
+
 - Valida límite de licencias al registrar instalación
 - Permite reactivar instalaciones previas en lugar de duplicar
 
 **Contratos**
+
 - El trigger de Neon actualiza el estado automáticamente según `fecha_venc`
 - Alertas en dashboard para contratos que vencen en ≤30 días
 
@@ -161,11 +179,12 @@ Documentación completa interactiva en `/docs` (Swagger).
 
 ## Variables de entorno
 
-| Variable | Requerida | Default | Descripción |
-|----------|-----------|---------|-------------|
-| `DATABASE_URL` | ✅ | — | Connection string de Neon |
-| `JWT_SECRET` | ✅ | — | Secreto para firmar tokens (mín. 32 chars) |
-| `JWT_EXPIRES_IN` | ❌ | `86400` | Expiración del token en segundos |
-| `PORT` | ❌ | `3000` | Puerto del servidor |
-| `NODE_ENV` | ❌ | `development` | Activa logs de query en dev |
-| `CORS_ORIGINS` | ❌ | `http://localhost:5173` | Orígenes permitidos (coma-separados) |
+| Variable         | Requerida | Default                 | Descripción                                |
+| ---------------- | --------- | ----------------------- | ------------------------------------------ |
+| `DATABASE_URL`   | ✅        | —                       | Connection string de Neon                  |
+| `JWT_SECRET`     | ✅        | —                       | Secreto para firmar tokens (mín. 32 chars) |
+| `JWT_EXPIRES_IN` | ❌        | `86400`                 | Expiración del token en segundos           |
+| `PORT`           | ❌        | `3000`                  | Puerto del servidor                        |
+| `NODE_ENV`       | ❌        | `development`           | Activa logs de query en dev                |
+| `CORS_ORIGINS`   | ❌        | `http://localhost:5173` | Orígenes permitidos (coma-separados)       |
+
