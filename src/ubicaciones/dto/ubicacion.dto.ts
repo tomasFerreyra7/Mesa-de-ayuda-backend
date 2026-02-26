@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsInt, IsOptional, IsString, IsBoolean, MaxLength } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, IsBoolean, MaxLength, IsArray } from 'class-validator';
 import { Type } from 'class-transformer';
 import { TipoJuzgadoEnum } from '../entities/juzgado.entity';
 
@@ -148,6 +148,46 @@ export class CreatePuestoDto {
   @IsString()
   @MaxLength(100)
   descripcion?: string;
+}
+
+export class UpdatePuestoDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  numero?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  descripcion?: string;
+
+  @ApiPropertyOptional({ description: 'Soft delete: false para dar de baja' })
+  @IsOptional()
+  @IsBoolean()
+  activo?: boolean;
+}
+
+export class FilterPuestoDto {
+  @ApiPropertyOptional({ description: 'Filtrar por un juzgado' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  juzgado_id?: number;
+
+  @ApiPropertyOptional({ description: 'Filtrar por varios juzgados (ej: juzgado_ids=1&juzgado_ids=2)', type: [Number] })
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  @Type(() => Number)
+  juzgado_ids?: number[];
+
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  activo?: boolean;
 }
 
 export class FilterDistritoDto {

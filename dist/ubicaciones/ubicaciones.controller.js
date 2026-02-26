@@ -62,11 +62,23 @@ let UbicacionesController = class UbicacionesController {
     removeJuzgado(id) {
         return this.service.removeJuzgado(id);
     }
+    findPuestosByJuzgado(id) {
+        return this.service.findPuestosByJuzgado(id);
+    }
+    findOnePuestoByJuzgado(id, puestoId) {
+        return this.service.findOnePuestoByJuzgado(id, puestoId);
+    }
     createPuesto(id, dto) {
         return this.service.createPuesto(id, dto);
     }
+    updatePuesto(juzgadoId, puestoId, dto) {
+        return this.service.updatePuesto(juzgadoId, puestoId, dto);
+    }
     removePuesto(juzgadoId, puestoId) {
         return this.service.removePuesto(juzgadoId, puestoId);
+    }
+    findPuestos(filter) {
+        return this.service.findPuestos(filter);
     }
 };
 exports.UbicacionesController = UbicacionesController;
@@ -189,6 +201,23 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UbicacionesController.prototype, "removeJuzgado", null);
 __decorate([
+    (0, common_1.Get)('juzgados/:id/puestos'),
+    (0, swagger_1.ApiOperation)({ summary: 'Listar puestos del juzgado' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], UbicacionesController.prototype, "findPuestosByJuzgado", null);
+__decorate([
+    (0, common_1.Get)('juzgados/:id/puestos/:puestoId'),
+    (0, swagger_1.ApiOperation)({ summary: 'Detalle de puesto del juzgado (con juzgado y equipo)' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Param)('puestoId', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number]),
+    __metadata("design:returntype", void 0)
+], UbicacionesController.prototype, "findOnePuestoByJuzgado", null);
+__decorate([
     (0, common_1.Post)('juzgados/:id/puestos'),
     (0, roles_decorator_1.Roles)(usuario_entity_1.RolEnum.ADMIN),
     (0, swagger_1.ApiOperation)({ summary: 'Agregar puesto al juzgado' }),
@@ -198,6 +227,17 @@ __decorate([
     __metadata("design:paramtypes", [Number, ubicacion_dto_1.CreatePuestoDto]),
     __metadata("design:returntype", void 0)
 ], UbicacionesController.prototype, "createPuesto", null);
+__decorate([
+    (0, common_1.Patch)('juzgados/:juzgadoId/puestos/:puestoId'),
+    (0, roles_decorator_1.Roles)(usuario_entity_1.RolEnum.ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Actualizar puesto' }),
+    __param(0, (0, common_1.Param)('juzgadoId', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Param)('puestoId', common_1.ParseIntPipe)),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number, ubicacion_dto_1.UpdatePuestoDto]),
+    __metadata("design:returntype", void 0)
+], UbicacionesController.prototype, "updatePuesto", null);
 __decorate([
     (0, common_1.Delete)('juzgados/:juzgadoId/puestos/:puestoId'),
     (0, roles_decorator_1.Roles)(usuario_entity_1.RolEnum.ADMIN),
@@ -209,6 +249,14 @@ __decorate([
     __metadata("design:paramtypes", [Number, Number]),
     __metadata("design:returntype", void 0)
 ], UbicacionesController.prototype, "removePuesto", null);
+__decorate([
+    (0, common_1.Get)('puestos'),
+    (0, swagger_1.ApiOperation)({ summary: 'Listar puestos (extra: filtrar por uno o varios juzgados)' }),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [ubicacion_dto_1.FilterPuestoDto]),
+    __metadata("design:returntype", void 0)
+], UbicacionesController.prototype, "findPuestos", null);
 exports.UbicacionesController = UbicacionesController = __decorate([
     (0, swagger_1.ApiTags)('Ubicaciones'),
     (0, swagger_1.ApiBearerAuth)(),

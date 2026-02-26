@@ -11,6 +11,8 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const usuarios_service_1 = require("./usuarios.service");
 const usuarios_controller_1 = require("./usuarios.controller");
+const notificaciones_service_1 = require("./notificaciones.service");
+const notificaciones_controller_1 = require("./notificaciones.controller");
 const usuario_entity_1 = require("./entities/usuario.entity");
 const notificacion_entity_1 = require("./entities/notificacion.entity");
 const juzgado_entity_1 = require("../ubicaciones/entities/juzgado.entity");
@@ -20,9 +22,9 @@ exports.UsuariosModule = UsuariosModule;
 exports.UsuariosModule = UsuariosModule = __decorate([
     (0, common_1.Module)({
         imports: [typeorm_1.TypeOrmModule.forFeature([usuario_entity_1.Usuario, notificacion_entity_1.Notificacion, juzgado_entity_1.Juzgado])],
-        controllers: [usuarios_controller_1.UsuariosController],
-        providers: [usuarios_service_1.UsuariosService],
-        exports: [usuarios_service_1.UsuariosService, typeorm_1.TypeOrmModule],
+        controllers: [usuarios_controller_1.UsuariosController, notificaciones_controller_1.NotificacionesController],
+        providers: [usuarios_service_1.UsuariosService, notificaciones_service_1.NotificacionesService],
+        exports: [usuarios_service_1.UsuariosService, notificaciones_service_1.NotificacionesService, typeorm_1.TypeOrmModule],
     })
 ], UsuariosModule);
 //# sourceMappingURL=usuarios.module.js.map
