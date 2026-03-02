@@ -25,6 +25,11 @@ npm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+# Windows: nombres reservados (evita error "invalid path 'nul'" en git add)
+nul
+con
+prn
+aux
 
 # Test
 coverage/
