@@ -13,69 +13,56 @@ Construido con **NestJS + TypeORM + PostgreSQL (Neon DB)**.
 
 ---
 
-## Instalación
+## Instalación y puesta en marcha
 
-```bash
-# 1. Instalar dependencias
-npm install
+Pasos detallados en **[Levantar el servidor](#levantar-el-servidor)**. Resumen: instalar dependencias, crear `.env` con `DATABASE_URL`, `JWT_SECRET`, etc., ejecutar el DDL en Neon y luego `npm run start:dev`.
 
-# 2. Crear archivo de variables de entorno
-cp .env.example .env
-```
-
-Editá `.env` con tus valores reales:
-
-```env
-DATABASE_URL=postgresql://user:pass@ep-xxx.us-east-2.aws.neon.tech/neondb?sslmode=require
-JWT_SECRET=un-secreto-muy-largo-y-aleatorio-de-al-menos-32-caracteres
-JWT_EXPIRES_IN=86400
-PORT=3000
-NODE_ENV=development
-CORS_ORIGINS=http://localhost:5173
-```
-
-> **Importante:** `DATABASE_URL` lo encontrás en el panel de Neon → tu proyecto → Connection string.  
-> Asegurate de copiar la que dice `?sslmode=require` al final.
-
----
-
-## Ejecutar el DDL en Neon
-
-Antes de levantar el backend, el schema debe existir en tu base de datos:
-
-1. Ir a [console.neon.tech](https://console.neon.tech)
-2. Abrir tu proyecto → **SQL Editor**
-3. Pegar el contenido de `sistemap_neon.sql` y ejecutar
+> **Importante:** `DATABASE_URL` lo encontrás en el panel de Neon → tu proyecto → Connection string (con `?sslmode=require` al final).
 
 ---
 
 ## Levantar el servidor
 
-```bash
-# Desarrollo (con hot-reload)
-npm run start:dev
+1. **Instalar dependencias** (solo la primera vez después de clonar):
+   ```bash
+   npm install
+   ```
 
-# Producción
-npm run build && npm run start:prod
-```
+2. **Configurar `.env`** en la raíz del proyecto con al menos:
+   - `DATABASE_URL` (connection string de Neon, con `?sslmode=require`)
+   - `JWT_SECRET` (mín. 32 caracteres)
+   - `JWT_EXPIRES_IN` (ej. `86400`)
+   - `PORT` (ej. `8080`)
+   - `NODE_ENV` (ej. `development`)
+   - `CORS_ORIGINS` (ej. `http://localhost:5173`)
 
-El servidor queda en: `http://localhost:3000/v1`  
-Swagger UI en: `http://localhost:3000/docs`
+3. **Tener el DDL ejecutado** en Neon (contenido de `sistemap_neon.sql` en el SQL Editor).
 
-**Primera vez:** para crear un usuario admin inicial, ejecutá `npm run seed:admin`.
+4. **Arrancar**:
+   ```bash
+   # Desarrollo (con hot-reload; crea el schema en la DB si no existe)
+   npm run start:dev
+   ```
+   Para producción:
+   ```bash
+   npm run build && npm run start:prod
+   ```
+
+El servidor queda en: `http://localhost:PORT/v1` (o `https://...` si configurás SSL).  
+Swagger UI en: `http://localhost:PORT/docs`
 
 ---
 
 ## Scripts disponibles
 
-| Comando              | Descripción                                           |
-| -------------------- | ----------------------------------------------------- |
-| `npm run start:dev`  | Servidor en desarrollo (hot-reload)                   |
-| `npm run build`      | Compila el proyecto → carpeta `dist/`                 |
-| `npm run start:prod` | Ejecuta la versión compilada (requiere `build` antes) |
-| `npm run seed:admin` | Crea el usuario administrador inicial                 |
-| `npm run lint`       | Ejecuta ESLint sobre el código                        |
-| `npm run test`       | Ejecuta los tests con Jest                            |
+| Comando               | Descripción                                           |
+| --------------------- | ----------------------------------------------------- |
+| `npm run start:dev`   | Servidor en desarrollo (hot-reload)                   |
+| `npm run build`       | Compila el proyecto → carpeta `dist/`                 |
+| `npm run start:prod`  | Ejecuta la versión compilada (requiere `build` antes) |
+| `npm run certs:generate` | Genera certificados autofirmados para HTTPS (desarrollo) |
+| `npm run lint`        | Ejecuta ESLint sobre el código                        |
+| `npm run test`        | Ejecuta los tests con Jest                            |
 
 ---
 
