@@ -1,12 +1,8 @@
-import {
-  Injectable, NotFoundException, ConflictException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Equipo, EstadoHwEnum } from './entities/equipo.entity';
-import {
-  CreateEquipoDto, UpdateEquipoDto, ReubicarEquipoDto, FilterEquipoDto,
-} from './dto/equipo.dto';
+import { CreateEquipoDto, UpdateEquipoDto, ReubicarEquipoDto, FilterEquipoDto } from './dto/equipo.dto';
 import { paginate } from '../common/pipes/pagination.dto';
 
 @Injectable()
@@ -28,10 +24,11 @@ export class EquiposService {
         { q: `%${filter.q}%` },
       );
     }
-    if (filter.clase)  qb.andWhere('e.clase = :clase', { clase: filter.clase });
+    if (filter.clase) qb.andWhere('e.clase = :clase', { clase: filter.clase });
     if (filter.estado) qb.andWhere('e.estado = :estado', { estado: filter.estado });
+    else qb.andWhere('e.estado != :baja', { baja: EstadoHwEnum.DADO_DE_BAJA });
     if (filter.sin_asignar) qb.andWhere('e.puestoId IS NULL');
-    if (filter.juzgado_id)  qb.andWhere('j.id = :jid', { jid: filter.juzgado_id });
+    if (filter.juzgado_id) qb.andWhere('j.id = :jid', { jid: filter.juzgado_id });
 
     qb.orderBy('e.nroInventario').skip(filter.skip).take(filter.take);
     const [data, total] = await qb.getManyAndCount();

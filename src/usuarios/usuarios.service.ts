@@ -1,6 +1,4 @@
-import {
-  Injectable, NotFoundException, ConflictException, ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -18,15 +16,14 @@ export class UsuariosService {
   ) {}
 
   async findAll(filter: FilterUsuarioDto) {
-    const qb = this.repo
-      .createQueryBuilder('u')
-      .leftJoinAndSelect('u.juzgados', 'j');
+    const qb = this.repo.createQueryBuilder('u').leftJoinAndSelect('u.juzgados', 'j');
 
     if (filter.q) {
       qb.andWhere('(u.nombre ILIKE :q OR u.email ILIKE :q)', { q: `%${filter.q}%` });
     }
     if (filter.rol) qb.andWhere('u.rol = :rol', { rol: filter.rol });
     if (filter.activo !== undefined) qb.andWhere('u.activo = :activo', { activo: filter.activo });
+    else qb.andWhere('u.activo = true');
 
     const users = await qb.orderBy('u.nombre').getMany();
     return users.map(this.sanitize);
@@ -81,9 +78,7 @@ export class UsuariosService {
     if (dto.activo !== undefined) user.activo = dto.activo;
     if (dto.avatarColor !== undefined) user.avatarColor = dto.avatarColor;
     if (dto.juzgadoIds !== undefined) {
-      user.juzgados = dto.juzgadoIds.length
-        ? await this.juzgadosRepo.findByIds(dto.juzgadoIds)
-        : [];
+      user.juzgados = dto.juzgadoIds.length ? await this.juzgadosRepo.findByIds(dto.juzgadoIds) : [];
     }
 
     const saved = await this.repo.save(user);

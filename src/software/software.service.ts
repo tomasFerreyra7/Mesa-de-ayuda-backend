@@ -1,13 +1,9 @@
-import {
-  Injectable, NotFoundException, ConflictException, BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Software, EstadoSwEnum } from './entities/software.entity';
 import { SoftwareEquipo } from './entities/software-equipo.entity';
-import {
-  CreateSoftwareDto, UpdateSoftwareDto, InstalarSoftwareDto, FilterSoftwareDto,
-} from './dto/software.dto';
+import { CreateSoftwareDto, UpdateSoftwareDto, InstalarSoftwareDto, FilterSoftwareDto } from './dto/software.dto';
 import { paginate } from '../common/pipes/pagination.dto';
 
 @Injectable()
@@ -27,8 +23,9 @@ export class SoftwareService {
         q: `%${filter.q}%`,
       });
     }
-    if (filter.tipo)   qb.andWhere('s.tipo = :tipo', { tipo: filter.tipo });
+    if (filter.tipo) qb.andWhere('s.tipo = :tipo', { tipo: filter.tipo });
     if (filter.estado) qb.andWhere('s.estado = :estado', { estado: filter.estado });
+    else qb.andWhere('s.estado != :baja', { baja: EstadoSwEnum.DADO_DE_BAJA });
 
     qb.orderBy('s.nombre').skip(filter.skip).take(filter.take);
     const [data, total] = await qb.getManyAndCount();
@@ -65,10 +62,7 @@ export class SoftwareService {
 
     // Auto-asignar nroSw si no se pasó
     if (!dto.nro_sw) {
-      const last = await this.repo
-        .createQueryBuilder('s')
-        .orderBy('s.id', 'DESC')
-        .getOne();
+      const last = await this.repo.createQueryBuilder('s').orderBy('s.id', 'DESC').getOne();
       const nextNum = last ? last.id + 1 : 1;
       sw.nroSw = `SW-${String(nextNum).padStart(4, '0')}`;
     }
@@ -117,9 +111,7 @@ export class SoftwareService {
 
     // Verificar límite de licencias
     if (sw.maxInstalaciones && sw.instalacionesAct >= sw.maxInstalaciones) {
-      throw new BadRequestException(
-        `Límite de licencias alcanzado (${sw.maxInstalaciones} instalaciones)`,
-      );
+      throw new BadRequestException(`Límite de licencias alcanzado (${sw.maxInstalaciones} instalaciones)`);
     }
 
     const existe = await this.instalRepo.findOne({

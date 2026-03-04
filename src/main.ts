@@ -1,7 +1,12 @@
+import { config as loadEnv } from 'dotenv';
+loadEnv(); // Cargar .env antes de create() para leer SSL_* al arrancar con HTTPS
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const helmet = require('helmet');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -10,8 +15,26 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
+function getHttpsOptions(): { key: Buffer; cert: Buffer } | undefined {
+  const keyPath = process.env.SSL_KEY_PATH;
+  const certPath = process.env.SSL_CERT_PATH;
+  if (!keyPath || !certPath) return undefined;
+  const keyFull = join(process.cwd(), keyPath);
+  const certFull = join(process.cwd(), certPath);
+  if (!existsSync(keyFull) || !existsSync(certFull)) return undefined;
+  try {
+    return {
+      key: readFileSync(keyFull),
+      cert: readFileSync(certFull),
+    };
+  } catch {
+    return undefined;
+  }
+}
+
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const httpsOptions = getHttpsOptions();
+  const app = await NestFactory.create(AppModule, httpsOptions ? { httpsOptions } : {});
   const config = app.get(ConfigService);
 
   // ── Seguridad ─────────────────────────────────────────────────
@@ -19,9 +42,13 @@ async function bootstrap() {
   app.use(compression());
 
   // ── CORS ──────────────────────────────────────────────────────
-  const origins = config.get<string>('CORS_ORIGINS', 'http://localhost:5173')
+  let origins = config.get<string>('CORS_ORIGINS', 'http://localhost:5173')
     .split(',')
     .map((o) => o.trim());
+  if (httpsOptions) {
+    const extra = ['https://localhost:5173', 'https://localhost:3001'];
+    origins = [...new Set([...origins, ...extra])];
+  }
 
   app.enableCors({
     origin: origins,
@@ -64,8 +91,9 @@ async function bootstrap() {
 
   const port = config.get<number>('PORT', 3000);
   await app.listen(port);
-  console.log(`🚀 SistemaPJ API corriendo en: http://localhost:${port}/v1`);
-  console.log(`📚 Swagger: http://localhost:${port}/docs`);
+  const protocol = httpsOptions ? 'https' : 'http';
+  console.log(`🚀 SistemaPJ API corriendo en: ${protocol}://localhost:${port}/v1`);
+  console.log(`📚 Swagger: ${protocol}://localhost:${port}/docs`);
 }
 
 bootstrap();

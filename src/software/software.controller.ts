@@ -1,12 +1,7 @@
-import {
-  Controller, Get, Post, Patch, Delete, Body, Param,
-  Query, ParseIntPipe, HttpCode, HttpStatus,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, ParseIntPipe, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SoftwareService } from './software.service';
-import {
-  CreateSoftwareDto, UpdateSoftwareDto, InstalarSoftwareDto, FilterSoftwareDto,
-} from './dto/software.dto';
+import { CreateSoftwareDto, UpdateSoftwareDto, InstalarSoftwareDto, FilterSoftwareDto } from './dto/software.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolEnum } from '../usuarios/entities/usuario.entity';
 
@@ -45,7 +40,7 @@ export class SoftwareController {
   @Delete(':id')
   @Roles(RolEnum.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Dar de baja software' })
+  @ApiOperation({ summary: 'Soft delete: dar de baja software (estado = Dado de Baja)' })
   darDeBaja(@Param('id', ParseIntPipe) id: number) {
     return this.service.darDeBaja(id);
   }
@@ -67,10 +62,7 @@ export class SoftwareController {
   @Roles(RolEnum.ADMIN, RolEnum.OPERARIO)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Desinstalar software de equipo' })
-  desinstalar(
-    @Param('id', ParseIntPipe) id: number,
-    @Param('equipoId', ParseIntPipe) equipoId: number,
-  ) {
+  desinstalar(@Param('id', ParseIntPipe) id: number, @Param('equipoId', ParseIntPipe) equipoId: number) {
     return this.service.desinstalar(id, equipoId);
   }
 }

@@ -10,6 +10,7 @@
     "start": "nest start",
     "ensure-schema": "node scripts/ensure-schema.js",
     "seed:admin": "node scripts/seed-admin.js",
+    "certs:generate": "node scripts/generate-certs.js",
     "prestart:dev": "node scripts/ensure-schema.js",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
