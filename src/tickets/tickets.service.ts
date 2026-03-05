@@ -209,7 +209,10 @@ export class TicketsService {
     return this.comentariosRepo.save(comentario);
   }
 
-  async getHistorial(ticketId: number) {
+  async getHistorial(ticketId: number, currentUser: Usuario) {
+    const ticket = await this.repo.findOne({ where: { id: ticketId } });
+    if (!ticket) throw new NotFoundException(`Ticket #${ticketId} no encontrado`);
+    this.checkAccess(ticket, currentUser);
     return this.historialRepo.find({
       where: { ticketId },
       relations: ['usuario'],

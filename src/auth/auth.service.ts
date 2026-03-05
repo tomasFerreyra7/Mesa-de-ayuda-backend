@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -45,11 +45,13 @@ export class AuthService {
       where: { id: userId },
       relations: ['juzgados'],
     });
+    if (!user) throw new NotFoundException('Usuario no encontrado');
     return this.sanitizeUser(user);
   }
 
   async changePassword(userId: number, dto: ChangePasswordDto) {
     const user = await this.usuariosRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Usuario no encontrado');
 
     if (!(await bcrypt.compare(dto.password_actual, user.passwordHash))) {
       throw new BadRequestException('La contraseña actual es incorrecta');
