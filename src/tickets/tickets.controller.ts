@@ -73,7 +73,7 @@ export class TicketsController {
 
   @Get(':id/historial')
   @ApiOperation({ summary: 'Historial de estados del ticket' })
-  getHistorial(@Param('id', ParseIntPipe) id: number) {
-    return this.service.getHistorial(id);
+  getHistorial(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: Usuario) {
+    return this.service.getHistorial(id, user);
   }
 }

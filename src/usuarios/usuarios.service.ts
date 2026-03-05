@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Usuario, RolEnum } from './entities/usuario.entity';
 import { Juzgado } from '../ubicaciones/entities/juzgado.entity';
@@ -53,7 +53,7 @@ export class UsuariosService {
     });
 
     if (dto.juzgadoIds?.length) {
-      user.juzgados = await this.juzgadosRepo.findByIds(dto.juzgadoIds);
+      user.juzgados = await this.juzgadosRepo.find({ where: { id: In(dto.juzgadoIds) } });
     }
 
     const saved = await this.repo.save(user);
@@ -78,7 +78,7 @@ export class UsuariosService {
     if (dto.activo !== undefined) user.activo = dto.activo;
     if (dto.avatarColor !== undefined) user.avatarColor = dto.avatarColor;
     if (dto.juzgadoIds !== undefined) {
-      user.juzgados = dto.juzgadoIds.length ? await this.juzgadosRepo.findByIds(dto.juzgadoIds) : [];
+      user.juzgados = dto.juzgadoIds.length ? await this.juzgadosRepo.find({ where: { id: In(dto.juzgadoIds) } }) : [];
     }
 
     const saved = await this.repo.save(user);

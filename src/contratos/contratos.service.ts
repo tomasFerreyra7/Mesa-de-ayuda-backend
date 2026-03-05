@@ -2,7 +2,7 @@ import {
   Injectable, NotFoundException, ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Contrato } from './entities/contrato.entity';
 import { Proveedor } from './entities/proveedor.entity';
 import { Equipo } from '../equipos/entities/equipo.entity';
@@ -74,10 +74,10 @@ export class ContratosService {
     });
 
     if (dto.equipo_ids?.length) {
-      contrato.equipos = await this.equipoRepo.findByIds(dto.equipo_ids);
+      contrato.equipos = await this.equipoRepo.find({ where: { id: In(dto.equipo_ids) } });
     }
     if (dto.software_ids?.length) {
-      contrato.softwares = await this.softwareRepo.findByIds(dto.software_ids);
+      contrato.softwares = await this.softwareRepo.find({ where: { id: In(dto.software_ids) } });
     }
 
     const saved = await this.contratoRepo.save(contrato);
@@ -98,10 +98,10 @@ export class ContratosService {
     if (dto.observaciones !== undefined) contrato.observaciones = dto.observaciones;
     if (dto.activo !== undefined)       contrato.activo = dto.activo;
     if (dto.equipo_ids !== undefined) {
-      contrato.equipos = dto.equipo_ids.length ? await this.equipoRepo.findByIds(dto.equipo_ids) : [];
+      contrato.equipos = dto.equipo_ids.length ? await this.equipoRepo.find({ where: { id: In(dto.equipo_ids) } }) : [];
     }
     if (dto.software_ids !== undefined) {
-      contrato.softwares = dto.software_ids.length ? await this.softwareRepo.findByIds(dto.software_ids) : [];
+      contrato.softwares = dto.software_ids.length ? await this.softwareRepo.find({ where: { id: In(dto.software_ids) } }) : [];
     }
 
     await this.contratoRepo.save(contrato);
