@@ -11,6 +11,9 @@ build/
 .env.local
 .env.*.local
 
+# Certificados locales (claves privadas)
+certs/
+
 # Logs
 logs/
 *.log
