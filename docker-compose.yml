@@ -1,0 +1,12 @@
+# Levantar el backend con: docker-compose up --build
+# La API queda en http://localhost:8080/v1
+
+services:
+  backend:
+    build: .
+    container_name: sistemap-backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    restart: "no"
