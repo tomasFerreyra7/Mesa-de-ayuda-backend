@@ -19,7 +19,7 @@ Este README explica **cómo clonar el repositorio, configurarlo y demostrar que 
 
 Antes de seguir, necesitás:
 
-- **Node.js 18+** y **npm** instalados.
+- **Node.js 18+** y **npm** (si vas a correr el proyecto sin Docker), **o** **Docker** (si vas a usar contenedores).
 - Una **cuenta en [Neon](https://neon.tech)** (base PostgreSQL en la nube). Creá un proyecto y anotá el _connection string_.
 - **(Opcional)** Si más adelante querés usar HTTPS: **OpenSSL** (en Windows suele venir con [Git for Windows](https://git-scm.com)).
 
@@ -105,11 +105,33 @@ npm run certs:generate
 
 ### Paso 5 — Arrancar el servidor
 
+Podés hacerlo de dos formas:
+
+**Opción A — Con Node (desarrollo con recarga automática)**
+
 ```bash
 npm run start:dev
 ```
 
-**Qué hace:** levanta el backend con recarga automática al cambiar código. Antes de arrancar, ejecuta un script que verifica/crea el schema en la DB.
+**Opción B — Con Docker**
+
+Si tenés Docker instalado, podés construir una imagen y correr el backend en un contenedor:
+
+1. **Construir la imagen** (solo la primera vez o cuando cambies código):
+
+   ```bash
+   docker build -t sistemap-backend .
+   ```
+
+2. **Ejecutar el contenedor** (usando tu archivo `.env` para las variables):
+
+   ```bash
+   docker run -p 8080:8080 --env-file .env sistemap-backend
+   ```
+
+   La API queda disponible en **http://localhost:8080/v1**. Swagger en **http://localhost:8080/docs**.
+
+**Qué hace (Node):** levanta el backend con recarga automática. Antes de arrancar, ejecuta un script que verifica/crea el schema en la DB.
 
 **Cómo verificar que funcionó:** en la consola deberías ver algo como:
 
@@ -157,12 +179,48 @@ Después de arrancar con `npm run start:dev`:
 
 ## Producción
 
-Para compilar y correr en modo producción:
+**Sin Docker:**
 
 ```bash
 npm run build
 npm run start:prod
 ```
+
+**Con Docker:** la imagen que construís con `docker build` ya es de producción (multi-stage). Ejecutá el contenedor con `docker run` y las variables de entorno adecuadas (por ejemplo `--env-file .env` o las que use tu servidor).
+
+---
+
+## Subir cambios al repositorio
+
+Cuando modifiques código, Dockerfile, README o cualquier archivo y quieras guardar esos cambios en el repo (GitHub, GitLab, etc.):
+
+1. **Ver qué cambió:**
+
+   ```bash
+   git status
+   ```
+
+2. **Agregar los archivos** que quieras subir (todos los modificados):
+
+   ```bash
+   git add .
+   ```
+
+   O solo algunos: `git add dockerfile README.md .dockerignore`
+
+3. **Hacer un commit** con un mensaje claro:
+
+   ```bash
+   git commit -m "Agregar Docker y actualizar README con pasos para Docker y subida al repo"
+   ```
+
+4. **Enviar al repositorio remoto** (reemplazá `main` por el nombre de tu rama si es otra, por ejemplo `master`):
+
+   ```bash
+   git push origin main
+   ```
+
+Si es la primera vez que subís desde esta máquina, puede que te pida configurar usuario y email de Git, o autenticarte con el remoto (token, SSH, etc.). Después de eso, con estos cuatro pasos (`status` → `add` → `commit` → `push`) subís cualquier cambio.
 
 ---
 
@@ -177,6 +235,13 @@ npm run start:prod
 | `npm run certs:generate` | Genera certificados autofirmados para HTTPS (desarrollo) |
 | `npm run lint`           | Ejecuta ESLint sobre el código                           |
 | `npm run test`           | Ejecuta los tests con Jest                               |
+
+## Docker
+
+| Comando                                                    | Descripción                                            |
+| ---------------------------------------------------------- | ------------------------------------------------------ |
+| `docker build -t sistemap-backend .`                       | Construye la imagen del backend.                       |
+| `docker run -p 8080:8080 --env-file .env sistemap-backend` | Ejecuta el contenedor usando las variables del `.env`. |
 
 ---
 
