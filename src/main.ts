@@ -42,12 +42,18 @@ async function bootstrap() {
   app.use(compression());
 
   // ── CORS ──────────────────────────────────────────────────────
-  let origins = config.get<string>('CORS_ORIGINS', 'http://localhost:5173')
+  let origins = config
+    .get<string>('CORS_ORIGINS', 'http://localhost:5173,http://localhost:3000,http://localhost:3001')
     .split(',')
-    .map((o) => o.trim());
+    .map((o) => o.trim())
+    .filter(Boolean);
   if (httpsOptions) {
-    const extra = ['https://localhost:5173', 'https://localhost:3001'];
+    const extra = ['https://localhost:5173', 'https://localhost:3001', 'https://localhost:3000'];
     origins = [...new Set([...origins, ...extra])];
+  }
+  // En desarrollo, asegurar que el front en :3000 (Next.js) esté permitido
+  if (config.get('NODE_ENV') !== 'production' && !origins.includes('http://localhost:3000')) {
+    origins.push('http://localhost:3000');
   }
 
   app.enableCors({
