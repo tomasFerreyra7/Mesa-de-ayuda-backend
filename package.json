@@ -20,7 +20,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "docker:build": "docker build -t sistemap-backend .",
-    "docker:run": "docker run -p 8081:8080 --env-file .env sistemap-backend"
+    "docker:run": "docker run -p 8080:8080 --env-file .env sistemap-backend"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",

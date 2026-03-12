@@ -131,6 +131,8 @@ Si tenés Docker instalado, podés construir una imagen y correr el backend en u
 
    La API queda disponible en **http://localhost:8080/v1**. Swagger en **http://localhost:8080/docs**.
 
+   **Si en tu máquina el puerto 8080 ya está ocupado** (otro proceso o contenedor), podés exponer el contenedor en otro puerto, por ejemplo: `docker run -p 8081:8080 --env-file .env sistemap-backend`. La API quedaría en **http://localhost:8081/v1** y en Postman tendrías que usar la base URL con puerto 8081.
+
 **Qué hace (Node):** levanta el backend con recarga automática. Antes de arrancar, ejecuta un script que verifica/crea el schema en la DB.
 
 **Cómo verificar que funcionó:** en la consola deberías ver algo como:
