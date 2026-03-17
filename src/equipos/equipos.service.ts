@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Equipo, EstadoHwEnum } from './entities/equipo.entity';
+import { Puesto } from '../ubicaciones/entities/puesto.entity';
 import { CreateEquipoDto, UpdateEquipoDto, ReubicarEquipoDto, FilterEquipoDto } from './dto/equipo.dto';
 import { paginate } from '../common/pipes/pagination.dto';
 
@@ -10,6 +11,8 @@ export class EquiposService {
   constructor(
     @InjectRepository(Equipo)
     private readonly repo: Repository<Equipo>,
+    @InjectRepository(Puesto)
+    private readonly puestoRepo: Repository<Puesto>,
   ) {}
 
   async findAll(filter: FilterEquipoDto) {
@@ -42,17 +45,29 @@ export class EquiposService {
     const exists = await this.repo.findOne({ where: { nroInventario: dto.nro_inventario } });
     if (exists) throw new ConflictException(`N° inventario '${dto.nro_inventario}' ya existe`);
 
+    // nro_serie vacío -> null para no violar UNIQUE (varios equipos sin número de serie)
+    const nroSerie = dto.nro_serie?.trim() ? dto.nro_serie.trim() : null;
+    if (nroSerie) {
+      const existsSerie = await this.repo.findOne({ where: { nroSerie } });
+      if (existsSerie) throw new ConflictException(`N° de serie '${nroSerie}' ya existe`);
+    }
+
+    if (dto.puesto_id != null) {
+      const puesto = await this.puestoRepo.findOne({ where: { id: dto.puesto_id } });
+      if (!puesto) throw new BadRequestException(`Puesto #${dto.puesto_id} no existe`);
+    }
+
     const equipo = this.repo.create({
-      nroInventario: dto.nro_inventario,
+      nroInventario: dto.nro_inventario.trim(),
       clase: dto.clase,
-      subtipo: dto.subtipo,
-      marca: dto.marca,
-      modelo: dto.modelo,
-      nroSerie: dto.nro_serie,
-      estado: dto.estado,
-      puestoId: dto.puesto_id,
-      fechaAlta: dto.fecha_alta,
-      observaciones: dto.observaciones,
+      subtipo: dto.subtipo?.trim() || null,
+      marca: dto.marca?.trim() || null,
+      modelo: dto.modelo?.trim() || null,
+      nroSerie,
+      estado: dto.estado ?? EstadoHwEnum.ACTIVO,
+      puestoId: dto.puesto_id ?? null,
+      fechaAlta: dto.fecha_alta?.trim() || null,
+      observaciones: dto.observaciones?.trim() || null,
     });
 
     const saved = await this.repo.save(equipo);
