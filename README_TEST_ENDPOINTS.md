@@ -4,6 +4,8 @@ Base URL: `http://localhost:8080/v1` (o la configurada en `PORT`).
 
 Autenticación: Bearer JWT en header `Authorization` (salvo los marcados como **Público**).
 
+**Rol `operario`:** el JWT incluye la relación `juzgados`. Listados y mutaciones de **equipos**, **tickets**, **instalaciones de software** y **KPIs/alertas del dashboard** quedan **acotados a esos juzgados** (no puede ver ni tocar datos de otras sedes). Si no tiene juzgados asignados, verá listas vacías y recibirá error al intentar operar.
+
 ---
 
 ## 1. Auth (`/v1/auth`)
@@ -59,7 +61,7 @@ Autenticación: Bearer JWT en header `Authorization` (salvo los marcados como **
 | Método | Endpoint                   | Descripción                      | Auth | Roles           | Prueba |
 | ------ | -------------------------- | -------------------------------- | ---- | --------------- | ------ |
 | GET    | `/v1/equipos`              | Listar equipos                   | JWT  | —               | ☐      |
-| POST   | `/v1/equipos`              | Dar de alta equipo               | JWT  | ADMIN           | ☐      |
+| POST   | `/v1/equipos`              | Dar de alta equipo               | JWT  | ADMIN, OPERARIO | ☐      |
 | GET    | `/v1/equipos/:id`          | Detalle de equipo                | JWT  | —               | ☐      |
 | PATCH  | `/v1/equipos/:id`          | Actualizar equipo                | JWT  | ADMIN, OPERARIO | ☐      |
 | PATCH  | `/v1/equipos/:id/reubicar` | Mover equipo a otro puesto       | JWT  | ADMIN, OPERARIO | ☐      |
@@ -191,4 +193,3 @@ Autenticación: Bearer JWT en header `Authorization` (salvo los marcados como **
    - 403: sin permiso (rol insuficiente).
    - 404: recurso no encontrado (id inexistente).
 4. **Swagger**: En desarrollo, documentación en `http://localhost:3000/docs`.
-

@@ -139,7 +139,7 @@ export class UbicacionesService {
   async findOneJuzgado(id: number) {
     const j = await this.juzgadoRepo.findOne({
       where: { id },
-      relations: ['distrito', 'puestos', 'puestos.equipo'],
+      relations: ['distrito', 'puestos', 'puestos.equipos'],
     });
     if (!j) throw new NotFoundException(`Juzgado #${id} no encontrado`);
     return j;
@@ -183,7 +183,7 @@ export class UbicacionesService {
     const qb = this.puestoRepo
       .createQueryBuilder('p')
       .leftJoinAndSelect('p.juzgado', 'j')
-      .leftJoinAndSelect('p.equipo', 'e');
+      .leftJoinAndSelect('p.equipos', 'e');
     if (filter.juzgado_ids?.length) {
       qb.andWhere('p.juzgadoId IN (:...ids)', { ids: filter.juzgado_ids });
     } else if (filter.juzgado_id) {
@@ -206,7 +206,7 @@ export class UbicacionesService {
   async findOnePuestoByJuzgado(juzgadoId: number, puestoId: number) {
     const puesto = await this.puestoRepo.findOne({
       where: { id: puestoId, juzgadoId },
-      relations: ['juzgado', 'juzgado.distrito', 'equipo'],
+      relations: ['juzgado', 'juzgado.distrito', 'equipos'],
     });
     if (!puesto) throw new NotFoundException(`Puesto #${puestoId} no encontrado en este juzgado`);
     return puesto;
@@ -215,7 +215,7 @@ export class UbicacionesService {
   async findOnePuesto(id: number) {
     const puesto = await this.puestoRepo.findOne({
       where: { id },
-      relations: ['juzgado', 'juzgado.distrito', 'equipo'],
+      relations: ['juzgado', 'juzgado.distrito', 'equipos'],
     });
     if (!puesto) throw new NotFoundException(`Puesto #${id} no encontrado`);
     return puesto;

@@ -1,6 +1,6 @@
 import {
   Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
-  UpdateDateColumn, ManyToOne, OneToMany, OneToOne, ManyToMany,
+  UpdateDateColumn, ManyToOne, OneToMany, ManyToMany,
   JoinColumn, JoinTable,
 } from 'typeorm';
 import { Puesto } from '../../ubicaciones/entities/puesto.entity';
@@ -71,7 +71,8 @@ export class Equipo {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @OneToOne(() => Puesto, (p) => p.equipo)
+  /** Varios equipos (PC, impresora, etc.) pueden compartir el mismo puesto. */
+  @ManyToOne(() => Puesto, (p) => p.equipos, { nullable: true })
   @JoinColumn({ name: 'puesto_id' })
   puesto: Puesto;
 

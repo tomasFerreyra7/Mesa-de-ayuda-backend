@@ -3,7 +3,9 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SoftwareService } from './software.service';
 import { CreateSoftwareDto, UpdateSoftwareDto, InstalarSoftwareDto, FilterSoftwareDto } from './dto/software.dto';
 import { Roles } from '../common/decorators/roles.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RolEnum } from '../usuarios/entities/usuario.entity';
+import { Usuario } from '../usuarios/entities/usuario.entity';
 
 @ApiTags('Inventario Software')
 @ApiBearerAuth()
@@ -26,8 +28,8 @@ export class SoftwareController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Detalle de software' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.service.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: Usuario) {
+    return this.service.findOne(id, user);
   }
 
   @Patch(':id')
@@ -47,22 +49,22 @@ export class SoftwareController {
 
   @Get(':id/instalaciones')
   @ApiOperation({ summary: 'Ver instalaciones del software' })
-  getInstalaciones(@Param('id', ParseIntPipe) id: number) {
-    return this.service.getInstalaciones(id);
+  getInstalaciones(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: Usuario) {
+    return this.service.getInstalaciones(id, user);
   }
 
   @Post(':id/instalaciones')
   @Roles(RolEnum.ADMIN, RolEnum.OPERARIO)
   @ApiOperation({ summary: 'Registrar instalación en equipo' })
-  instalar(@Param('id', ParseIntPipe) id: number, @Body() dto: InstalarSoftwareDto) {
-    return this.service.instalar(id, dto);
+  instalar(@Param('id', ParseIntPipe) id: number, @Body() dto: InstalarSoftwareDto, @CurrentUser() user: Usuario) {
+    return this.service.instalar(id, dto, user);
   }
 
   @Delete(':id/instalaciones/:equipoId')
   @Roles(RolEnum.ADMIN, RolEnum.OPERARIO)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Desinstalar software de equipo' })
-  desinstalar(@Param('id', ParseIntPipe) id: number, @Param('equipoId', ParseIntPipe) equipoId: number) {
-    return this.service.desinstalar(id, equipoId);
+  desinstalar(@Param('id', ParseIntPipe) id: number, @Param('equipoId', ParseIntPipe) equipoId: number, @CurrentUser() user: Usuario) {
+    return this.service.desinstalar(id, equipoId, user);
   }
 }

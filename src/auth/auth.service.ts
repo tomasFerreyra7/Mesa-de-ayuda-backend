@@ -19,7 +19,7 @@ export class AuthService {
   async login(dto: LoginDto) {
     const user = await this.usuariosRepo.findOne({
       where: { email: dto.email, activo: true },
-      relations: ['juzgados'],
+      relations: ['juzgados', 'juzgados.distrito'],
     });
 
     if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
@@ -43,7 +43,7 @@ export class AuthService {
   async getMe(userId: number) {
     const user = await this.usuariosRepo.findOne({
       where: { id: userId },
-      relations: ['juzgados'],
+      relations: ['juzgados', 'juzgados.distrito'],
     });
     if (!user) throw new NotFoundException('Usuario no encontrado');
     return this.sanitizeUser(user);
@@ -61,9 +61,15 @@ export class AuthService {
     await this.usuariosRepo.update(userId, { passwordHash: hash });
   }
 
+  /** Respuesta pública: sin password; incluye juzgado_id / juzgado (primer juzgado) para filtros y UI. */
   private sanitizeUser(user: Usuario) {
-    const { passwordHash, ...safe } = user as any;
-    return safe;
+    const { passwordHash, ...rest } = user as any;
+    const juzgados = Array.isArray(rest.juzgados) ? rest.juzgados : [];
+    const first = juzgados[0];
+    return {
+      ...rest,
+      juzgado_id: first?.id ?? null,
+      juzgado: first ?? null,
+    };
   }
 }
-

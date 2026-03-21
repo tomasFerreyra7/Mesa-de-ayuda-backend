@@ -1,5 +1,5 @@
 import {
-  Injectable, NotFoundException, ForbiddenException, BadRequestException,
+  Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -7,14 +7,21 @@ import { Ticket, EstadoTicketEnum, TipoTicketEnum } from './entities/ticket.enti
 import { TicketHistorial } from './entities/ticket-historial.entity';
 import { TicketComentario } from './entities/ticket-comentario.entity';
 import { Usuario, RolEnum } from '../usuarios/entities/usuario.entity';
+import { Equipo } from '../equipos/entities/equipo.entity';
 import {
-  CreateTicketDto, UpdateTicketDto, CambiarEstadoDto,
-  AsignarTicketDto, CreateComentarioDto, FilterTicketDto,
-} from './dto/ticket.dto';
+  assertEquipoEnAlcanceOperario,
+  assertJuzgadoIdEnAlcanceOperario,
+  juzgadoIdsForUser,
+  operarioDebeAlcancePorJuzgado,
+} from '../common/utils/juzgado-scope.util';
+import { CreateTicketDto, UpdateTicketDto, CambiarEstadoDto, AsignarTicketDto, CreateComentarioDto, FilterTicketDto } from './dto/ticket.dto';
 import { paginate } from '../common/pipes/pagination.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class TicketsService {
+  private readonly logger = new Logger(TicketsService.name);
+
   constructor(
     @InjectRepository(Ticket)
     private readonly repo: Repository<Ticket>,
@@ -22,6 +29,11 @@ export class TicketsService {
     private readonly historialRepo: Repository<TicketHistorial>,
     @InjectRepository(TicketComentario)
     private readonly comentariosRepo: Repository<TicketComentario>,
+    @InjectRepository(Equipo)
+    private readonly equipoRepo: Repository<Equipo>,
+    @InjectRepository(Usuario)
+    private readonly usuarioRepo: Repository<Usuario>,
+    private readonly mailService: MailService,
   ) {}
 
   async findAll(filter: FilterTicketDto, currentUser: Usuario) {
@@ -38,18 +50,23 @@ export class TicketsService {
       qb.andWhere('t.asignadoAId = :uid', { uid: currentUser.id });
     }
 
-    if (filter.q) {
-      qb.andWhere(
-        '(t.asunto ILIKE :q OR t.nroTicket ILIKE :q OR t.descripcion ILIKE :q)',
-        { q: `%${filter.q}%` },
-      );
+    if (operarioDebeAlcancePorJuzgado(currentUser)) {
+      const oj = juzgadoIdsForUser(currentUser);
+      if (oj.length === 0) {
+        return paginate([], 0, filter);
+      }
+      qb.andWhere('t.juzgadoId IN (:...operJuzgadoIds)', { operJuzgadoIds: oj });
     }
-    if (filter.estado)      qb.andWhere('t.estado = :estado', { estado: filter.estado });
-    if (filter.prioridad)   qb.andWhere('t.prioridad = :p', { p: filter.prioridad });
-    if (filter.tipo)        qb.andWhere('t.tipo = :tipo', { tipo: filter.tipo });
+
+    if (filter.q) {
+      qb.andWhere('(t.asunto ILIKE :q OR t.nroTicket ILIKE :q OR t.descripcion ILIKE :q)', { q: `%${filter.q}%` });
+    }
+    if (filter.estado) qb.andWhere('t.estado = :estado', { estado: filter.estado });
+    if (filter.prioridad) qb.andWhere('t.prioridad = :p', { p: filter.prioridad });
+    if (filter.tipo) qb.andWhere('t.tipo = :tipo', { tipo: filter.tipo });
     if (filter.asignado_a_id) qb.andWhere('t.asignadoAId = :aid', { aid: filter.asignado_a_id });
-    if (filter.juzgado_id)  qb.andWhere('t.juzgadoId = :jid', { jid: filter.juzgado_id });
-    if (filter.equipo_id)   qb.andWhere('t.equipoId = :eid', { eid: filter.equipo_id });
+    if (filter.juzgado_id) qb.andWhere('t.juzgadoId = :jid', { jid: filter.juzgado_id });
+    if (filter.equipo_id) qb.andWhere('t.equipoId = :eid', { eid: filter.equipo_id });
 
     qb.skip(filter.skip).take(filter.take);
     const [data, total] = await qb.getManyAndCount();
@@ -88,12 +105,33 @@ export class TicketsService {
       throw new BadRequestException('Se requiere software_id para tickets de Software');
     }
 
+    let juzgadoIdEfectivo = dto.juzgado_id ?? null;
+
+    if (operarioDebeAlcancePorJuzgado(currentUser)) {
+      if (dto.tipo === TipoTicketEnum.HARDWARE && dto.equipo_id) {
+        const eq = await this.equipoRepo.findOne({
+          where: { id: dto.equipo_id },
+          relations: ['puesto', 'puesto.juzgado'],
+        });
+        if (!eq) throw new NotFoundException(`Equipo #${dto.equipo_id} no encontrado`);
+        assertEquipoEnAlcanceOperario(currentUser, eq);
+        const jDesdeEquipo = eq.puesto?.juzgadoId;
+        if (juzgadoIdEfectivo == null && jDesdeEquipo != null) {
+          juzgadoIdEfectivo = jDesdeEquipo;
+        }
+        if (jDesdeEquipo != null && juzgadoIdEfectivo != null && jDesdeEquipo !== juzgadoIdEfectivo) {
+          throw new BadRequestException('El juzgado del ticket no coincide con el del equipo seleccionado');
+        }
+      }
+      assertJuzgadoIdEnAlcanceOperario(currentUser, juzgadoIdEfectivo);
+    }
+
     const ticket = this.repo.create({
       tipo: dto.tipo,
       asunto: dto.asunto,
       descripcion: dto.descripcion,
       prioridad: dto.prioridad,
-      juzgadoId: dto.juzgado_id,
+      juzgadoId: juzgadoIdEfectivo,
       equipoId: dto.equipo_id,
       softwareId: dto.software_id,
       creadoPorId: currentUser.id,
@@ -118,13 +156,16 @@ export class TicketsService {
     }
 
     const estadoAnterior = ticket.estado;
+    const asignadoAnteriorId = ticket.asignadoAId;
 
-    if (dto.asunto !== undefined)       ticket.asunto = dto.asunto;
-    if (dto.descripcion !== undefined)  ticket.descripcion = dto.descripcion;
-    if (dto.prioridad !== undefined)    ticket.prioridad = dto.prioridad;
+    if (dto.asunto !== undefined) ticket.asunto = dto.asunto;
+    if (dto.descripcion !== undefined) ticket.descripcion = dto.descripcion;
+    if (dto.prioridad !== undefined) ticket.prioridad = dto.prioridad;
     if (dto.asignado_a_id !== undefined) {
       ticket.asignadoAId = dto.asignado_a_id;
-      ticket.fechaAsig = new Date();
+      if (dto.asignado_a_id != null) {
+        ticket.fechaAsig = new Date();
+      }
     }
     if (dto.estado !== undefined) {
       await this.transicionarEstado(ticket, dto.estado, currentUser.id, null);
@@ -136,6 +177,19 @@ export class TicketsService {
     }
 
     await this.repo.save(ticket);
+
+    if (
+      dto.asignado_a_id !== undefined &&
+      dto.asignado_a_id != null &&
+      dto.asignado_a_id !== asignadoAnteriorId
+    ) {
+      void this.enviarMailAsignacionTicket(id, dto.asignado_a_id).catch((err: Error) => {
+        this.logger.warn(
+          `No se pudo enviar correo de asignación (ticket #${id}): ${err?.message ?? err}`,
+        );
+      });
+    }
+
     return this.findOne(id, currentUser);
   }
 
@@ -155,6 +209,9 @@ export class TicketsService {
   async asignar(id: number, dto: AsignarTicketDto, currentUser: Usuario) {
     const ticket = await this.repo.findOne({ where: { id } });
     if (!ticket) throw new NotFoundException(`Ticket #${id} no encontrado`);
+    this.checkAccess(ticket, currentUser);
+
+    const tecnicoAnteriorId = ticket.asignadoAId;
 
     ticket.asignadoAId = dto.tecnico_id;
     ticket.fechaAsig = new Date();
@@ -164,6 +221,14 @@ export class TicketsService {
 
     await this.repo.save(ticket);
     await this.registrarHistorial(id, currentUser.id, EstadoTicketEnum.ABIERTO, EstadoTicketEnum.EN_PROGRESO, `Asignado a técnico #${dto.tecnico_id}`);
+
+    if (dto.tecnico_id !== tecnicoAnteriorId) {
+      void this.enviarMailAsignacionTicket(id, dto.tecnico_id).catch((err: Error) => {
+        this.logger.warn(
+          `No se pudo enviar correo de asignación (ticket #${id}): ${err?.message ?? err}`,
+        );
+      });
+    }
 
     return this.findOne(id, currentUser);
   }
@@ -221,7 +286,31 @@ export class TicketsService {
   }
 
   // ── Helpers privados ─────────────────────────────────────────
+  private async enviarMailAsignacionTicket(ticketId: number, tecnicoUserId: number): Promise<void> {
+    const [ticket, tecnico] = await Promise.all([
+      this.repo.findOne({ where: { id: ticketId } }),
+      this.usuarioRepo.findOne({ where: { id: tecnicoUserId } }),
+    ]);
+    if (!ticket || !tecnico) return;
+
+    await this.mailService.sendTicketAssignedToTechnician({
+      to: tecnico.email,
+      tecnicoNombre: tecnico.nombre,
+      ticketId: ticket.id,
+      nroTicket: ticket.nroTicket,
+      asunto: ticket.asunto,
+      prioridad: ticket.prioridad,
+      tipo: ticket.tipo,
+    });
+  }
+
   private checkAccess(ticket: Ticket, user: Usuario) {
+    if (operarioDebeAlcancePorJuzgado(user)) {
+      const ids = juzgadoIdsForUser(user);
+      if (!ids.length || ticket.juzgadoId == null || !ids.includes(ticket.juzgadoId)) {
+        throw new ForbiddenException('No tenés acceso a este ticket');
+      }
+    }
     if ([RolEnum.TECNICO_INTERNO, RolEnum.TECNICO_PROVEEDOR].includes(user.rol)) {
       if (ticket.asignadoAId !== user.id) {
         throw new ForbiddenException('Solo podés acceder a tus tickets asignados');
@@ -233,12 +322,7 @@ export class TicketsService {
     return user.rol === RolEnum.TECNICO_PROVEEDOR;
   }
 
-  private async transicionarEstado(
-    ticket: Ticket,
-    nuevoEstado: EstadoTicketEnum,
-    _userId: number,
-    _comentario: string | null,
-  ) {
+  private async transicionarEstado(ticket: Ticket, nuevoEstado: EstadoTicketEnum, _userId: number, _comentario: string | null) {
     ticket.estado = nuevoEstado;
     if (nuevoEstado === EstadoTicketEnum.RESUELTO) ticket.fechaResol = new Date();
     if (nuevoEstado === EstadoTicketEnum.CERRADO) {
@@ -247,13 +331,7 @@ export class TicketsService {
     }
   }
 
-  private async registrarHistorial(
-    ticketId: number,
-    usuarioId: number,
-    estadoAnterior: EstadoTicketEnum,
-    estadoNuevo: EstadoTicketEnum,
-    comentario?: string,
-  ) {
+  private async registrarHistorial(ticketId: number, usuarioId: number, estadoAnterior: EstadoTicketEnum, estadoNuevo: EstadoTicketEnum, comentario?: string) {
     await this.historialRepo.save({
       ticketId,
       usuarioId,

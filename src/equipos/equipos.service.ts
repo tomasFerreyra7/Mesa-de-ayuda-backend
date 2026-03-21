@@ -3,8 +3,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Equipo, EstadoHwEnum } from './entities/equipo.entity';
 import { Puesto } from '../ubicaciones/entities/puesto.entity';
+import { Usuario } from '../usuarios/entities/usuario.entity';
 import { CreateEquipoDto, UpdateEquipoDto, ReubicarEquipoDto, FilterEquipoDto } from './dto/equipo.dto';
 import { paginate } from '../common/pipes/pagination.dto';
+import {
+  assertEquipoEnAlcanceOperario,
+  assertPuestoEnAlcanceOperario,
+  juzgadoIdsForUser,
+  operarioDebeAlcancePorJuzgado,
+} from '../common/utils/juzgado-scope.util';
 
 @Injectable()
 export class EquiposService {
@@ -15,8 +22,16 @@ export class EquiposService {
     private readonly puestoRepo: Repository<Puesto>,
   ) {}
 
-  async findAll(filter: FilterEquipoDto) {
+  async findAll(filter: FilterEquipoDto, user: Usuario) {
     const qb = this.repo.createQueryBuilder('e').leftJoinAndSelect('e.puesto', 'p').leftJoinAndSelect('p.juzgado', 'j');
+
+    if (operarioDebeAlcancePorJuzgado(user)) {
+      const jids = juzgadoIdsForUser(user);
+      if (jids.length === 0) {
+        return paginate([], 0, filter);
+      }
+      qb.andWhere('j.id IN (:...juzgadoIds)', { juzgadoIds: jids });
+    }
 
     if (filter.q) {
       qb.andWhere('(e.nroInventario ILIKE :q OR e.marca ILIKE :q OR e.modelo ILIKE :q OR e.nroSerie ILIKE :q)', { q: `%${filter.q}%` });
@@ -32,18 +47,24 @@ export class EquiposService {
     return paginate(data, total, filter);
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, user: Usuario) {
     const equipo = await this.repo.findOne({
       where: { id },
       relations: ['puesto', 'puesto.juzgado', 'softwareInstalado', 'softwareInstalado.software', 'contratos'],
     });
     if (!equipo) throw new NotFoundException(`Equipo #${id} no encontrado`);
+    assertEquipoEnAlcanceOperario(user, equipo);
     return equipo;
   }
 
-  async create(dto: CreateEquipoDto) {
-    const exists = await this.repo.findOne({ where: { nroInventario: dto.nro_inventario } });
-    if (exists) throw new ConflictException(`N° inventario '${dto.nro_inventario}' ya existe`);
+  async create(dto: CreateEquipoDto, user: Usuario) {
+    const nroInventario = dto.nro_inventario.trim();
+    if (!nroInventario) {
+      throw new BadRequestException('N° inventario no puede estar vacío');
+    }
+
+    const exists = await this.repo.findOne({ where: { nroInventario } });
+    if (exists) throw new ConflictException(`N° inventario '${nroInventario}' ya existe`);
 
     // nro_serie vacío -> null para no violar UNIQUE (varios equipos sin número de serie)
     const nroSerie = dto.nro_serie?.trim() ? dto.nro_serie.trim() : null;
@@ -55,10 +76,16 @@ export class EquiposService {
     if (dto.puesto_id != null) {
       const puesto = await this.puestoRepo.findOne({ where: { id: dto.puesto_id } });
       if (!puesto) throw new BadRequestException(`Puesto #${dto.puesto_id} no existe`);
+      assertPuestoEnAlcanceOperario(user, puesto);
+    } else if (operarioDebeAlcancePorJuzgado(user)) {
+      // Operario debe tener al menos un juzgado para dar de alta (aunque sea sin puesto aún)
+      if (juzgadoIdsForUser(user).length === 0) {
+        throw new BadRequestException('No tenés juzgados asignados; no podés registrar equipos hasta que un administrador te asigne uno.');
+      }
     }
 
     const equipo = this.repo.create({
-      nroInventario: dto.nro_inventario.trim(),
+      nroInventario,
       clase: dto.clase,
       subtipo: dto.subtipo?.trim() || null,
       marca: dto.marca?.trim() || null,
@@ -71,17 +98,21 @@ export class EquiposService {
     });
 
     const saved = await this.repo.save(equipo);
-    return this.findOne(saved.id);
+    return this.findOne(saved.id, user);
   }
 
-  async update(id: number, dto: UpdateEquipoDto) {
-    const equipo = await this.repo.findOne({ where: { id } });
+  async update(id: number, dto: UpdateEquipoDto, user: Usuario) {
+    const equipo = await this.repo.findOne({
+      where: { id },
+      relations: ['puesto', 'puesto.juzgado'],
+    });
     if (!equipo) throw new NotFoundException(`Equipo #${id} no encontrado`);
+    assertEquipoEnAlcanceOperario(user, equipo);
 
-    // OneToOne con Puesto: si asignamos un puesto_id, ese puesto solo puede estar en un equipo.
-    // Liberar ese puesto de cualquier otro equipo antes de asignarlo a este.
     if (dto.puesto_id !== undefined && dto.puesto_id != null) {
-      await this.repo.update({ puestoId: dto.puesto_id }, { puestoId: null });
+      const puesto = await this.puestoRepo.findOne({ where: { id: dto.puesto_id } });
+      if (!puesto) throw new BadRequestException(`Puesto #${dto.puesto_id} no existe`);
+      assertPuestoEnAlcanceOperario(user, puesto);
     }
 
     Object.assign(equipo, {
@@ -96,21 +127,26 @@ export class EquiposService {
     });
 
     await this.repo.save(equipo);
-    return this.findOne(id);
+    return this.findOne(id, user);
   }
 
-  async reubicar(id: number, dto: ReubicarEquipoDto) {
-    const equipo = await this.repo.findOne({ where: { id } });
+  async reubicar(id: number, dto: ReubicarEquipoDto, user: Usuario) {
+    const equipo = await this.repo.findOne({
+      where: { id },
+      relations: ['puesto', 'puesto.juzgado'],
+    });
     if (!equipo) throw new NotFoundException(`Equipo #${id} no encontrado`);
+    assertEquipoEnAlcanceOperario(user, equipo);
 
     const nuevoPuestoId = dto.puesto_id ?? null;
-    // OneToOne: si asignamos un puesto, liberarlo de cualquier otro equipo antes.
     if (nuevoPuestoId != null) {
-      await this.repo.update({ puestoId: nuevoPuestoId }, { puestoId: null });
+      const puesto = await this.puestoRepo.findOne({ where: { id: nuevoPuestoId } });
+      if (!puesto) throw new BadRequestException(`Puesto #${nuevoPuestoId} no existe`);
+      assertPuestoEnAlcanceOperario(user, puesto);
     }
     equipo.puestoId = nuevoPuestoId;
     await this.repo.save(equipo);
-    return this.findOne(id);
+    return this.findOne(id, user);
   }
 
   async darDeBaja(id: number) {

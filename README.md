@@ -44,9 +44,13 @@ npm install
 El backend necesita variables de entorno para conectarse a la base de datos y para JWT. Esas variables **no** van en el repo; las definís en un archivo `.env` que solo existe en tu máquina.
 
 1. En la **raíz del proyecto** (donde está `package.json`), creá un archivo llamado exactamente **`.env`**.
-2. Copiá este contenido y **reemplazá** los valores que correspondan:
+2. Copiá este contenido en **un solo archivo** `.env` y **reemplazá** los valores que correspondan (podés dejar comentadas o vacías las partes que no uses todavía):
 
 ```env
+# ═══════════════════════════════════════════════════════════════
+#  Todas las variables en un solo .env (raíz del proyecto)
+# ═══════════════════════════════════════════════════════════════
+
 # ── Base de datos (Neon) ───────────────────────────────────────
 # Obtené el connection string en: Neon → tu proyecto → Connection string
 # Debe terminar en ?sslmode=require
@@ -57,24 +61,41 @@ JWT_SECRET=un-texto-secreto-de-al-menos-32-caracteres-cualquiera
 JWT_EXPIRES_IN=86400
 
 # ── App ───────────────────────────────────────────────────────
-PORT=8080
+PORT=3000
 NODE_ENV=development
 
-# ── CORS (URLs desde las que el frontend puede llamar a la API) ─
-CORS_ORIGINS=http://localhost:5173,http://localhost:3001
+# ── CORS (coma-separados, sin espacios) ─────────────────────────
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://localhost:3001
+
+# ── Correo (Nodemailer) — aviso al técnico al asignar ticket ───
+# Sin MAIL_ENABLED=true y SMTP_HOST el backend no envía mails (ok en dev).
+MAIL_ENABLED=false
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=
+SMTP_PASS=
+MAIL_FROM="SistemaPJ <noreply@example.com>"
+APP_PUBLIC_URL=http://localhost:5173
+
+# ── HTTPS (opcional: solo si usás npm run certs:generate) ───────
+# SSL_KEY_PATH=certs/key.pem
+# SSL_CERT_PATH=certs/cert.pem
+
+# ── Seed admin (npm run seed:admin) — opcional ───────────────────
+# Valores por defecto del script: admin@gmail.com / Admin123!
+# SEED_ADMIN_EMAIL=admin@tudominio.com
+# SEED_ADMIN_PASSWORD=CambiarEnProduccion123!
+# SEED_ADMIN_NOMBRE=Administrador
 ```
 
 **Dónde encontrar el `DATABASE_URL`:** en [console.neon.tech](https://console.neon.tech) → tu proyecto → **Connection string**. Elegí la opción que incluye `?sslmode=require`.
 
-Con solo esto el servidor puede arrancar por **HTTP**. Si más adelante querés **HTTPS**, agregá al final del `.env`:
+Con **base de datos + JWT + PORT** alcanza para arrancar por **HTTP**. Mail, HTTPS y `SEED_*` son opcionales en el **mismo** `.env`: descomentá `SSL_*` solo si generás certificados.
 
-```env
-# ── HTTPS (solo si generás certificados con npm run certs:generate) ─
-SSL_KEY_PATH=certs/key.pem
-SSL_CERT_PATH=certs/cert.pem
-```
+**Docker:** el `Dockerfile` fija `PORT=8080` en la imagen; podés usar `PORT=8080` en tu `.env` local si querés el mismo puerto.
 
-(Si no ponés estas dos líneas, el servidor arranca por HTTP y está bien para probar.)
+**Archivo de entorno:** todo va en **`.env`** en la raíz del proyecto (no se sube al repo). El bloque de arriba es la referencia de claves; editá tu `.env` existente y agregá lo que falte (mail, CORS, etc.).
 
 ---
 
@@ -332,6 +353,7 @@ Documentación completa interactiva en `/docs` (Swagger).
 - Historial de estados registrado automáticamente en cada transición
 - Técnicos solo acceden a sus tickets asignados
 - Técnico proveedor no puede ver notas internas
+- Con `MAIL_ENABLED=true` y SMTP configurado, al asignar un técnico (PATCH `/tickets/:id/asignar` o `asignado_a_id` en PATCH del ticket) se envía un correo con Nodemailer (si el usuario tiene `email` en BD)
 
 **Software**
 
@@ -347,16 +369,29 @@ Documentación completa interactiva en `/docs` (Swagger).
 
 ## Variables de entorno
 
-| Variable         | Requerida | Default                 | Descripción                                              |
-| ---------------- | --------- | ----------------------- | -------------------------------------------------------- |
-| `DATABASE_URL`   | ✅        | —                       | Connection string de Neon                                |
-| `JWT_SECRET`     | ✅        | —                       | Secreto para firmar tokens (mín. 32 chars)               |
-| `JWT_EXPIRES_IN` | ❌        | `86400`                 | Expiración del token en segundos                         |
-| `PORT`           | ❌        | `3000`                  | Puerto del servidor                                      |
-| `NODE_ENV`       | ❌        | `development`           | Activa logs de query en dev                              |
-| `CORS_ORIGINS`   | ❌        | `http://localhost:5173` | Orígenes permitidos (coma-separados)                     |
-| `SSL_KEY_PATH`   | ❌        | —                       | Ruta a la clave privada (ej. `certs/key.pem`) para HTTPS |
-| `SSL_CERT_PATH`  | ❌        | —                       | Ruta al certificado (ej. `certs/cert.pem`) para HTTPS    |
+| Variable              | Requerida | Default                          | Descripción                                                   |
+| --------------------- | --------- | -------------------------------- | ------------------------------------------------------------- |
+| `DATABASE_URL`        | ✅        | —                                | Connection string de Neon                                     |
+| `JWT_SECRET`          | ✅        | —                                | Secreto para firmar tokens (mín. 32 chars)                    |
+| `JWT_EXPIRES_IN`      | ❌        | `86400`                          | Expiración del token en segundos                              |
+| `PORT`                | ❌        | `3000`                           | Puerto del servidor                                           |
+| `NODE_ENV`            | ❌        | `development`                    | Activa logs de query en dev                                   |
+| `CORS_ORIGINS`        | ❌        | `5173,3000,3001` (ver `main.ts`) | Orígenes permitidos (coma-separados, sin espacios)            |
+| `SSL_KEY_PATH`        | ❌        | —                                | Ruta a la clave privada (ej. `certs/key.pem`) para HTTPS      |
+| `SSL_CERT_PATH`       | ❌        | —                                | Ruta al certificado (ej. `certs/cert.pem`) para HTTPS         |
+| `MAIL_ENABLED`        | ❌        | —                                | `true` / `1` para enviar mails (aviso al asignar ticket)      |
+| `SMTP_HOST`           | ❌        | —                                | Servidor SMTP (ej. `smtp.gmail.com`)                          |
+| `SMTP_PORT`           | ❌        | `587`                            | Puerto SMTP                                                   |
+| `SMTP_SECURE`         | ❌        | `false`                          | `true` si usás puerto 465 (TLS directo)                       |
+| `SMTP_USER`           | ❌        | —                                | Usuario SMTP (si el servidor lo requiere)                     |
+| `SMTP_PASS`           | ❌        | —                                | Contraseña o app password                                     |
+| `MAIL_FROM`           | ❌        | `SistemaPJ <noreply@…>`          | Remitente del correo                                          |
+| `APP_PUBLIC_URL`      | ❌        | —                                | URL del front (link “Abrir ticket” en el mail), sin `/` final |
+| `SEED_ADMIN_EMAIL`    | ❌        | `admin@gmail.com`                | Solo `npm run seed:admin`                                     |
+| `SEED_ADMIN_PASSWORD` | ❌        | `Admin123!`                      | Solo `npm run seed:admin`                                     |
+| `SEED_ADMIN_NOMBRE`   | ❌        | `Administrador`                  | Solo `npm run seed:admin`                                     |
+
+**Todas** las variables anteriores van en el **mismo** archivo **`.env`** en la raíz. Sin `MAIL_ENABLED` + `SMTP_HOST` el backend **no** intenta enviar correos.
 
 ---
 

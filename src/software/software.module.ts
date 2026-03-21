@@ -4,11 +4,13 @@ import { SoftwareService } from './software.service';
 import { SoftwareController } from './software.controller';
 import { Software } from './entities/software.entity';
 import { SoftwareEquipo } from './entities/software-equipo.entity';
+import { Equipo } from '../equipos/entities/equipo.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Software, SoftwareEquipo])],
+  imports: [TypeOrmModule.forFeature([Software, SoftwareEquipo, Equipo])],
   controllers: [SoftwareController],
   providers: [SoftwareService],
   exports: [SoftwareService, TypeOrmModule],
 })
 export class SoftwareModule {}
+
