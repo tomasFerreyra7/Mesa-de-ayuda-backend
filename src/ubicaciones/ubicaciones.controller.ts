@@ -120,7 +120,7 @@ export class UbicacionesController {
   }
 
   @Get('juzgados/:id/puestos/:puestoId')
-  @ApiOperation({ summary: 'Detalle de puesto del juzgado (con juzgado y equipo)' })
+  @ApiOperation({ summary: 'Detalle de puesto del juzgado (con juzgado y equipos)' })
   findOnePuestoByJuzgado(@Param('id', ParseIntPipe) id: number, @Param('puestoId', ParseIntPipe) puestoId: number) {
     return this.service.findOnePuestoByJuzgado(id, puestoId);
   }

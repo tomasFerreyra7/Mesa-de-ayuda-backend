@@ -3,8 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Software, EstadoSwEnum } from './entities/software.entity';
 import { SoftwareEquipo } from './entities/software-equipo.entity';
+import { Equipo } from '../equipos/entities/equipo.entity';
+import { Usuario } from '../usuarios/entities/usuario.entity';
 import { CreateSoftwareDto, UpdateSoftwareDto, InstalarSoftwareDto, FilterSoftwareDto } from './dto/software.dto';
 import { paginate } from '../common/pipes/pagination.dto';
+import { assertEquipoEnAlcanceOperario, operarioDebeAlcancePorJuzgado, juzgadoIdsForUser } from '../common/utils/juzgado-scope.util';
 
 @Injectable()
 export class SoftwareService {
@@ -13,6 +16,8 @@ export class SoftwareService {
     private readonly repo: Repository<Software>,
     @InjectRepository(SoftwareEquipo)
     private readonly instalRepo: Repository<SoftwareEquipo>,
+    @InjectRepository(Equipo)
+    private readonly equipoRepo: Repository<Equipo>,
   ) {}
 
   async findAll(filter: FilterSoftwareDto) {
@@ -32,12 +37,19 @@ export class SoftwareService {
     return paginate(data, total, filter);
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, user?: Usuario) {
     const sw = await this.repo.findOne({
       where: { id },
-      relations: ['instalaciones', 'instalaciones.equipo', 'contratos'],
+      relations: ['instalaciones', 'instalaciones.equipo', 'instalaciones.equipo.puesto', 'contratos'],
     });
     if (!sw) throw new NotFoundException(`Software #${id} no encontrado`);
+    if (user && operarioDebeAlcancePorJuzgado(user)) {
+      const ids = juzgadoIdsForUser(user);
+      sw.instalaciones = (sw.instalaciones ?? []).filter((i) => {
+        const jId = i.equipo?.puesto?.juzgadoId;
+        return jId != null && ids.includes(jId);
+      });
+    }
     return sw;
   }
 
@@ -68,7 +80,7 @@ export class SoftwareService {
     }
 
     const saved = await this.repo.save(sw);
-    return this.findOne(saved.id);
+    return this.findOne(saved.id, undefined);
   }
 
   async update(id: number, dto: UpdateSoftwareDto) {
@@ -88,7 +100,7 @@ export class SoftwareService {
     });
 
     await this.repo.save(sw);
-    return this.findOne(id);
+    return this.findOne(id, undefined);
   }
 
   async darDeBaja(id: number) {
@@ -98,16 +110,29 @@ export class SoftwareService {
   }
 
   // ── Instalaciones ─────────────────────────────────────────────
-  async getInstalaciones(softwareId: number) {
-    return this.instalRepo.find({
+  async getInstalaciones(softwareId: number, user: Usuario) {
+    const rows = await this.instalRepo.find({
       where: { softwareId, activo: true },
       relations: ['equipo', 'equipo.puesto', 'equipo.puesto.juzgado'],
     });
+    if (!operarioDebeAlcancePorJuzgado(user)) return rows;
+    const ids = juzgadoIdsForUser(user);
+    return rows.filter((r) => {
+      const jId = r.equipo?.puesto?.juzgadoId;
+      return jId != null && ids.includes(jId);
+    });
   }
 
-  async instalar(softwareId: number, dto: InstalarSoftwareDto) {
+  async instalar(softwareId: number, dto: InstalarSoftwareDto, user: Usuario) {
     const sw = await this.repo.findOne({ where: { id: softwareId } });
     if (!sw) throw new NotFoundException(`Software #${softwareId} no encontrado`);
+
+    const eq = await this.equipoRepo.findOne({
+      where: { id: dto.equipo_id },
+      relations: ['puesto', 'puesto.juzgado'],
+    });
+    if (!eq) throw new NotFoundException(`Equipo #${dto.equipo_id} no encontrado`);
+    assertEquipoEnAlcanceOperario(user, eq);
 
     // Verificar límite de licencias
     if (sw.maxInstalaciones && sw.instalacionesAct >= sw.maxInstalaciones) {
@@ -131,10 +156,17 @@ export class SoftwareService {
     }
 
     await this.repo.increment({ id: softwareId }, 'instalacionesAct', 1);
-    return this.getInstalaciones(softwareId);
+    return this.getInstalaciones(softwareId, user);
   }
 
-  async desinstalar(softwareId: number, equipoId: number) {
+  async desinstalar(softwareId: number, equipoId: number, user: Usuario) {
+    const eq = await this.equipoRepo.findOne({
+      where: { id: equipoId },
+      relations: ['puesto', 'puesto.juzgado'],
+    });
+    if (!eq) throw new NotFoundException(`Equipo #${equipoId} no encontrado`);
+    assertEquipoEnAlcanceOperario(user, eq);
+
     const inst = await this.instalRepo.findOne({
       where: { softwareId, equipoId, activo: true },
     });

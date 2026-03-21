@@ -1,6 +1,6 @@
 import {
   Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
-  ManyToOne, OneToOne, JoinColumn, Unique,
+  ManyToOne, OneToMany, JoinColumn, Unique,
 } from 'typeorm';
 import { Juzgado } from './juzgado.entity';
 import { Equipo } from '../../equipos/entities/equipo.entity';
@@ -30,6 +30,6 @@ export class Puesto {
   @JoinColumn({ name: 'juzgado_id' })
   juzgado: Juzgado;
 
-  @OneToOne(() => Equipo, (e) => e.puesto)
-  equipo: Equipo;
+  @OneToMany(() => Equipo, (e) => e.puesto)
+  equipos: Equipo[];
 }
