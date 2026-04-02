@@ -38,32 +38,39 @@ async function bootstrap() {
   const config = app.get(ConfigService);
 
   // ── Seguridad ─────────────────────────────────────────────────
-  app.use(helmet());
+  // Ajuste para Vercel: crossOriginResourcePolicy en false para evitar bloqueos de CORS por Helmet
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: false,
+    }),
+  );
   app.use(compression());
 
   // ── CORS ──────────────────────────────────────────────────────
-  let origins = config
-    .get<string>('CORS_ORIGINS', 'http://localhost:5173,http://localhost:3000,http://localhost:3001')
-    .split(',')
-    .map((o) => o.trim())
-    .filter(Boolean);
+  // Leemos los orígenes de la variable de entorno, si no existe usamos locales
+  const corsOriginsEnv = config.get<string>('CORS_ORIGINS', '');
+  let origins = corsOriginsEnv
+    ? corsOriginsEnv
+        .split(',')
+        .map((o) => o.trim())
+        .filter(Boolean)
+    : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'];
+
   if (httpsOptions) {
     const extra = ['https://localhost:5173', 'https://localhost:3001', 'https://localhost:3000'];
     origins = [...new Set([...origins, ...extra])];
   }
-  // En desarrollo, asegurar que el front en :3000 (Next.js) esté permitido
-  if (config.get('NODE_ENV') !== 'production' && !origins.includes('http://localhost:3000')) {
-    origins.push('http://localhost:3000');
-  }
 
+  // Permitir el origen configurado en Vercel
   app.enableCors({
-    origin: origins,
+    origin: origins.length > 0 ? origins : true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     credentials: true,
   });
 
   // ── Prefix global ─────────────────────────────────────────────
+  // RECORDÁ: Esto hace que tus rutas sean /v1/auth/login
   app.setGlobalPrefix('v1');
 
   // ── Pipes ─────────────────────────────────────────────────────
@@ -95,11 +102,11 @@ async function bootstrap() {
     });
   }
 
-  const port = config.get<number>('PORT', 3000);
+  // Ajuste de Puerto para Vercel (usa process.env.PORT)
+  const port = process.env.PORT || config.get<number>('PORT', 3000);
   await app.listen(port);
-  const protocol = httpsOptions ? 'https' : 'http';
-  console.log(`🚀 SistemaPJ API corriendo en: ${protocol}://localhost:${port}/v1`);
-  console.log(`📚 Swagger: ${protocol}://localhost:${port}/docs`);
+
+  console.log(`🚀 Servidor corriendo en puerto: ${port}`);
 }
 
 bootstrap();
